@@ -8,6 +8,8 @@ import java.net.URI;
 import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
@@ -17,14 +19,15 @@ public class GlusterPath implements Path {
     public static final String SEPARATOR = "/";
     private GlusterFileSystem fileSystem;
     private String[] parts;
+    private String pathString;
     private boolean absolute;
 
     public GlusterPath(GlusterFileSystem fileSystem, String path) {
         if (null == fileSystem) {
             throw new IllegalArgumentException("fileSystem can not be empty");
         }
-        if (null == path || path.isEmpty()) {
-            throw new IllegalArgumentException("path can not be empty");
+        if (null == path) {
+            throw new InvalidPathException("", "path can not be null");
         }
         this.fileSystem = fileSystem;
 
@@ -104,42 +107,94 @@ public class GlusterPath implements Path {
 
     @Override
     public Path subpath(int i, int i2) {
-        return null;
+        if ((0 == i && parts.length <= 1 && parts[0].isEmpty())
+                || i < 0 || i2 < 0
+                || i >= parts.length || i2 > parts.length
+                || i > i2) {
+            throw new IllegalArgumentException("invalid indices");
+        }
+        return new GlusterPath(fileSystem, Arrays.copyOfRange(parts, i, i2), absolute);
     }
 
     @Override
     public boolean startsWith(Path path) {
-        return false;
+        GlusterPath otherPath = (GlusterPath) path;
+        if (this.equals(otherPath)) {
+            return true;
+        }
+        if (otherPath.getParts().length > parts.length) {
+            return false;
+        }
+        if (absolute && otherPath.isAbsolute() && otherPath.getParts()[0].isEmpty()) {
+            return true;
+        }
+        String[] thisPrefix = Arrays.copyOfRange(parts, 0, otherPath.getParts().length);
+        return ((absolute == otherPath.isAbsolute())
+                && (Arrays.equals(thisPrefix, otherPath.getParts())));
     }
 
     @Override
     public boolean startsWith(String s) {
-        return false;
+        return startsWith(new GlusterPath(fileSystem, s));
     }
 
     @Override
     public boolean endsWith(Path path) {
-        return false;
+        GlusterPath otherPath = (GlusterPath) path;
+        if (this.equals(otherPath)) {
+            return true;
+        }
+        if (otherPath.getParts().length > parts.length) {
+            return false;
+        }
+        if (absolute && otherPath.isAbsolute() && otherPath.getParts()[0].isEmpty()) {
+            return true;
+        }
+        String[] thisSuffix = Arrays.copyOfRange(parts, parts.length - otherPath.getParts().length, parts.length);
+        return ((false == otherPath.isAbsolute())
+                && (Arrays.equals(thisSuffix, otherPath.getParts())));
     }
 
     @Override
     public boolean endsWith(String s) {
-        return false;
+        return endsWith(new GlusterPath(fileSystem, s));
     }
 
     @Override
     public Path normalize() {
-        return null;
+        List<String> newParts = new LinkedList<String>();
+        for (String part : parts) {
+            if (part.equals("..")) {
+                newParts.remove(newParts.size() - 1);
+            } else if (!part.equals(".") && !part.isEmpty()) {
+                newParts.add(part);
+            }
+        }
+        return new GlusterPath(fileSystem, newParts.toArray(new String[]{}), absolute);
     }
 
     @Override
     public Path resolve(Path path) {
-        return null;
+        GlusterPath otherPath = (GlusterPath) path;
+        if (!otherPath.getFileSystem().equals(fileSystem)) {
+            throw new IllegalArgumentException("Can not resolve other path because it's on a different filesystem");
+        }
+        
+        if (otherPath.isAbsolute() || (absolute && parts.length == 1 && parts[0].isEmpty())) {
+            return new GlusterPath(fileSystem, otherPath.getParts(), true);
+        }
+
+        if (otherPath.getParts().length == 1 && otherPath.getParts()[0].isEmpty()) {
+            return this;
+        }
+        String[] newParts = Arrays.copyOf(parts, parts.length + otherPath.getParts().length);
+        System.arraycopy(otherPath.getParts(), 0, newParts, parts.length, otherPath.getParts().length);
+        return new GlusterPath(fileSystem, newParts, absolute);
     }
 
     @Override
     public Path resolve(String s) {
-        return null;
+        return resolve(new GlusterPath(fileSystem, s));
     }
 
     @Override
