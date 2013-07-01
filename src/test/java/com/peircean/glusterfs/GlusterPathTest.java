@@ -1,5 +1,6 @@
 package com.peircean.glusterfs;
 
+import com.sun.nio.zipfs.ZipPath;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -8,6 +9,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -302,12 +305,11 @@ public class GlusterPathTest extends TestCase {
         assertFalse(p1.endsWith("/bar"));
     }
 
-
     @Test
     public void testNormalize() {
         Path p = new GlusterPath(mockFileSystem, "foo//bar");
         assertEquals(new GlusterPath(mockFileSystem, "foo/bar"), p.normalize());
-        
+
         p = new GlusterPath(mockFileSystem, "foo/./bar");
         assertEquals(new GlusterPath(mockFileSystem, "foo/bar"), p.normalize());
 
@@ -316,16 +318,16 @@ public class GlusterPathTest extends TestCase {
 
         p = new GlusterPath(mockFileSystem, "foo/baz/../bar");
         assertEquals(new GlusterPath(mockFileSystem, "foo/bar"), p.normalize());
-        
+
         p = new GlusterPath(mockFileSystem, "foo/baz/../baz/../bar");
         assertEquals(new GlusterPath(mockFileSystem, "foo/bar"), p.normalize());
     }
-    
+
     @Test
     public void testResolve() {
         Path path = new GlusterPath(mockFileSystem, "/");
         Path otherPath = new GlusterPath(mockFileSystem, "/bar");
-        
+
         assertEquals(otherPath, path.resolve(otherPath));
 
         otherPath = new GlusterPath(mockFileSystem, "bar");
@@ -334,7 +336,7 @@ public class GlusterPathTest extends TestCase {
         otherPath = new GlusterPath(mockFileSystem, "");
         assertEquals(path, path.resolve(otherPath));
     }
-    
+
     @Test
     public void testResolve_string() {
         Path path = new GlusterPath(mockFileSystem, "/");
@@ -344,5 +346,135 @@ public class GlusterPathTest extends TestCase {
         assertEquals(new GlusterPath(mockFileSystem, "/bar"), path.resolve("bar"));
 
         assertEquals(path, path.resolve(""));
+
+        path = new GlusterPath(mockFileSystem, "/foo");
+        assertEquals(new GlusterPath(mockFileSystem, "/foo/bar"), path.resolve("bar"));
+    }
+
+    @Test
+    public void testResolveSibling() {
+        Path p = new GlusterPath(mockFileSystem, "foo/bar");
+        Path other = new GlusterPath(mockFileSystem, "baz");
+        Path finalPath = p.resolveSibling(other);
+        assertEquals(new GlusterPath(mockFileSystem, "foo/baz"), finalPath);
+    }
+
+    @Test
+    public void testResolveSibling_string() {
+        Path p = new GlusterPath(mockFileSystem, "foo/bar");
+        Path finalPath = p.resolveSibling("baz");
+        assertEquals(new GlusterPath(mockFileSystem, "foo/baz"), finalPath);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRelativize_otherIsRelative() {
+        Path p = new GlusterPath(mockFileSystem, "/foo/bar");
+        Path other = new GlusterPath(mockFileSystem, "foo/baz");
+        p.relativize(other);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRelativize_thisIsRelative() {
+        Path p = new GlusterPath(mockFileSystem, "foo/bar");
+        Path other = new GlusterPath(mockFileSystem, "/foo/baz");
+        p.relativize(other);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRelativize_bothAreRelative() {
+        Path p = new GlusterPath(mockFileSystem, "foo/bar");
+        Path other = new GlusterPath(mockFileSystem, "foo/baz");
+        p.relativize(other);
+    }
+
+    @Test
+    public void testRelativize() {
+        Path p = new GlusterPath(mockFileSystem, "/foo/bar");
+        Path other = new GlusterPath(mockFileSystem, "/foo/baz");
+
+        Path relativePath = p.relativize(other);
+        assertEquals(new GlusterPath(mockFileSystem, "../baz"), relativePath);
+
+        other = new GlusterPath(mockFileSystem, "/foo/bar/baz");
+        relativePath = p.relativize(other);
+        assertEquals(new GlusterPath(mockFileSystem, "baz"), relativePath);
+
+        p = new GlusterPath(mockFileSystem, "/foo/bar");
+        other = new GlusterPath(mockFileSystem, "/foo");
+        relativePath = p.relativize(other);
+        assertEquals(new GlusterPath(mockFileSystem, ".."), relativePath);
+
+        p = new GlusterPath(mockFileSystem, "/foo/bar");
+        other = new GlusterPath(mockFileSystem, "/baz");
+        relativePath = p.relativize(other);
+        assertEquals(new GlusterPath(mockFileSystem, "../../baz"), relativePath);
+
+        p = new GlusterPath(mockFileSystem, "/foo");
+        other = new GlusterPath(mockFileSystem, "/bar/baz");
+        relativePath = p.relativize(other);
+        assertEquals(new GlusterPath(mockFileSystem, "../bar/baz"), relativePath);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testToAbsolutePath_whenRelative() {
+        Path p = new GlusterPath(mockFileSystem, "foo");
+        p.toAbsolutePath();
+    }
+    
+    @Test
+    public void testToAbsolutePath() {
+        Path p = new GlusterPath(mockFileSystem, "/foo");
+        assertEquals(p, p.toAbsolutePath());
+    }
+    
+    @Test
+    public void testIterator() {
+        Path p = new GlusterPath(mockFileSystem, "/foo/bar");
+        Iterator<Path> it = p.iterator();
+        assertEquals(new GlusterPath(mockFileSystem, "foo"), it.next());
+        assertEquals(new GlusterPath(mockFileSystem, "bar"), it.next());
+
+        p = new GlusterPath(mockFileSystem, "/");
+        it = p.iterator();
+        assertFalse(it.hasNext());
+    }
+
+    @Test(expected = ClassCastException.class)
+    public void testCompareTo_differentProvider() {
+        Path path = new GlusterPath(mockFileSystem, "");
+        Path zipfile = Paths.get("/codeSamples/zipfs/zipfstest.zip");
+        path.compareTo(zipfile);
+    }
+    
+    @Test
+    public void testCompareTo() {
+        Path p = new GlusterPath(mockFileSystem, "/foo");
+        Path other = new GlusterPath(mockFileSystem, "/bar");
+        assertTrue(p.compareTo(other) > 0);
+
+        p = new GlusterPath(mockFileSystem, "/bar");
+        other = new GlusterPath(mockFileSystem, "/foo");
+        assertTrue(p.compareTo(other) < 0);
+
+        p = new GlusterPath(mockFileSystem, "/foo");
+        other = new GlusterPath(mockFileSystem, "/foo");
+        assertEquals(0, p.compareTo(other));
+
+        p = new GlusterPath(mockFileSystem, "/");
+        other = new GlusterPath(mockFileSystem, "/foo");
+        assertTrue(p.compareTo(other) < 0);
+
+        p = new GlusterPath(mockFileSystem, "/foo");
+        other = new GlusterPath(mockFileSystem, "/");
+        assertTrue(p.compareTo(other) > 0);
+    }
+
+    @Test
+    public void testToString() {
+        String pathString = "/bar/baz";
+        Path p = new GlusterPath(mockFileSystem, pathString);
+        String filesystemString = "gluster://127.0.2.1:foo";
+        doReturn(filesystemString).when(mockFileSystem).toString();
+        assertEquals(filesystemString + pathString, p.toString());
     }
 }

@@ -6,10 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
@@ -176,10 +173,10 @@ public class GlusterPath implements Path {
     @Override
     public Path resolve(Path path) {
         GlusterPath otherPath = (GlusterPath) path;
-        if (!otherPath.getFileSystem().equals(fileSystem)) {
+        if (!fileSystem.equals(otherPath.getFileSystem())) {
             throw new IllegalArgumentException("Can not resolve other path because it's on a different filesystem");
         }
-        
+
         if (otherPath.isAbsolute() || (absolute && parts.length == 1 && parts[0].isEmpty())) {
             return new GlusterPath(fileSystem, otherPath.getParts(), true);
         }
@@ -199,37 +196,69 @@ public class GlusterPath implements Path {
 
     @Override
     public Path resolveSibling(Path path) {
-        return null;
+        return getParent().resolve(path);
     }
 
     @Override
     public Path resolveSibling(String s) {
-        return null;
+        return getParent().resolve(s);
     }
 
     @Override
     public Path relativize(Path path) {
-        return null;
+        if (!fileSystem.equals(path.getFileSystem())) {
+            throw new IllegalArgumentException("Can not relativize other path because it's on a different filesystem");
+        }
+
+        if (!this.isAbsolute() || !path.isAbsolute()) {
+            throw new IllegalArgumentException("Can only relativize when both paths are absolute");
+        }
+        GlusterPath other = (GlusterPath) path;
+        List<String> relativeParts = new LinkedList<String>();
+        boolean stillCommon = true;
+        int lastCommonName = -1;
+        for (int i = 0; i < parts.length; i++) {
+            if (i >= other.getParts().length) {
+                for (int r = 0; r < other.getParts().length; r++) {
+                    relativeParts.add("..");
+                }
+                break;
+            }
+            if (stillCommon && parts[i].equals(other.getParts()[i])) {
+                lastCommonName = i;
+            } else {
+                stillCommon = false;
+                relativeParts.add("..");
+            }
+        }
+        for (int i = lastCommonName + 1; i < other.getParts().length; i++) {
+            relativeParts.add(other.getParts()[i]);
+        }
+        return new GlusterPath(fileSystem, relativeParts.toArray(new String[]{}), false);
     }
 
     @Override
     public URI toUri() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Path toAbsolutePath() {
-        return null;
+        if (!absolute) {
+            throw new UnsupportedOperationException();
+        } else {
+            return this;
+        }
     }
 
     @Override
     public Path toRealPath(LinkOption... linkOptions) throws IOException {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public File toFile() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -244,11 +273,40 @@ public class GlusterPath implements Path {
 
     @Override
     public Iterator<Path> iterator() {
-        return null;
+        List<Path> list = new ArrayList<Path>(parts.length);
+        if (parts.length >= 1 && !parts[0].isEmpty()) {
+            for (String p : parts) {
+                list.add(new GlusterPath(fileSystem, p));
+            }
+        }
+        return Collections.unmodifiableList(list).iterator();
     }
 
     @Override
     public int compareTo(Path path) {
-        return 0;
+        if (!getClass().equals(path.getClass())) {
+            throw new ClassCastException();
+        }
+        if (!fileSystem.equals(path.getFileSystem())) {
+            throw new IllegalArgumentException("Can not compare other path because it's on a different filesystem");
+        }
+        GlusterPath other = (GlusterPath) path;
+        String[] otherParts = other.getParts();
+        for (int i = 0; i < Math.min(parts.length, otherParts.length); i++) {
+            int c = parts[i].compareTo(otherParts[i]);
+            if (c != 0) {
+                return c;
+            }
+        }
+        return parts.length - otherParts.length;
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder((absolute ? "/" : ""));
+        for (String p : parts) {
+            sb.append(p).append("/");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        return fileSystem.toString() + sb.toString();
     }
 }
