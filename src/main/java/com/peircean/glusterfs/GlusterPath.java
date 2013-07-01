@@ -301,7 +301,7 @@ public class GlusterPath implements Path {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder((absolute ? GlusterFileSystem.SEPARATOR : ""));
+        StringBuilder sb = new StringBuilder((absolute ? fileSystem.getSeparator() : ""));
         for (String p : parts) {
             sb.append(p).append(fileSystem.getSeparator());
         }

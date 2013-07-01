@@ -2,6 +2,7 @@ package com.peircean.glusterfs;
 
 import com.sun.nio.zipfs.ZipPath;
 import junit.framework.TestCase;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -26,6 +27,11 @@ public class GlusterPathTest extends TestCase {
     @Mock
     private GlusterPath mockGlusterPath;
 
+    @Before
+    public void setUp() {
+        doReturn("/").when(mockFileSystem).getSeparator();
+    }
+    
     @Test
     public void testConstruct() {
         GlusterPath p = new GlusterPath(mockFileSystem, "/foo/bar");
