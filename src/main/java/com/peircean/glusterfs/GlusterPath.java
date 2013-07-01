@@ -13,7 +13,6 @@ import java.util.*;
  */
 @Data
 public class GlusterPath implements Path {
-    public static final String SEPARATOR = "/";
     private GlusterFileSystem fileSystem;
     private String[] parts;
     private String pathString;
@@ -29,14 +28,14 @@ public class GlusterPath implements Path {
         this.fileSystem = fileSystem;
 
         String stripped = path;
-        if (path.startsWith(SEPARATOR)) {
+        if (path.startsWith(fileSystem.getSeparator())) {
             absolute = true;
             stripped = stripped.substring(1);
         }
-        if (stripped.endsWith(SEPARATOR)) {
+        if (stripped.endsWith(fileSystem.getSeparator())) {
             stripped.substring(0, stripped.length() - 1);
         }
-        parts = stripped.split(SEPARATOR);
+        parts = stripped.split(fileSystem.getSeparator());
     }
 
     GlusterPath(GlusterFileSystem fileSystem, String[] parts, boolean absolute) {
@@ -302,9 +301,9 @@ public class GlusterPath implements Path {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder((absolute ? "/" : ""));
+        StringBuilder sb = new StringBuilder((absolute ? GlusterFileSystem.SEPARATOR : ""));
         for (String p : parts) {
-            sb.append(p).append("/");
+            sb.append(p).append(fileSystem.getSeparator());
         }
         sb.deleteCharAt(sb.length() - 1);
         return fileSystem.toString() + sb.toString();

@@ -10,6 +10,8 @@ import java.util.Set;
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
 public class GlusterFileSystem extends FileSystem {
+    private static final String SEPARATOR = "/";
+
     @Override
     public FileSystemProvider provider() {
         return null;
@@ -32,7 +34,7 @@ public class GlusterFileSystem extends FileSystem {
 
     @Override
     public String getSeparator() {
-        return null;
+        return SEPARATOR;
     }
 
     @Override
