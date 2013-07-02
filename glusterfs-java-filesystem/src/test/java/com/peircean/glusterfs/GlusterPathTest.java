@@ -30,7 +30,7 @@ public class GlusterPathTest extends TestCase {
     public void setUp() {
         doReturn("/").when(mockFileSystem).getSeparator();
     }
-    
+
     @Test
     public void testConstruct() {
         GlusterPath p = new GlusterPath(mockFileSystem, "/foo/bar");
@@ -425,13 +425,13 @@ public class GlusterPathTest extends TestCase {
         Path p = new GlusterPath(mockFileSystem, "foo");
         p.toAbsolutePath();
     }
-    
+
     @Test
     public void testToAbsolutePath() {
         Path p = new GlusterPath(mockFileSystem, "/foo");
         assertEquals(p, p.toAbsolutePath());
     }
-    
+
     @Test
     public void testIterator() {
         Path p = new GlusterPath(mockFileSystem, "/foo/bar");
@@ -450,7 +450,7 @@ public class GlusterPathTest extends TestCase {
         Path zipfile = Paths.get("/codeSamples/zipfs/zipfstest.zip");
         path.compareTo(zipfile);
     }
-    
+
     @Test
     public void testCompareTo() {
         Path p = new GlusterPath(mockFileSystem, "/foo");

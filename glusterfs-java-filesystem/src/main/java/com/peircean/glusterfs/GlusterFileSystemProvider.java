@@ -50,22 +50,22 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void createDirectory(Path path, FileAttribute<?>... fileAttributes) throws IOException {
-      
+
     }
 
     @Override
     public void delete(Path path) throws IOException {
-      
+
     }
 
     @Override
     public void copy(Path path, Path path2, CopyOption... copyOptions) throws IOException {
-      
+
     }
 
     @Override
     public void move(Path path, Path path2, CopyOption... copyOptions) throws IOException {
-      
+
     }
 
     @Override
@@ -85,7 +85,7 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void checkAccess(Path path, AccessMode... accessModes) throws IOException {
-      
+
     }
 
     @Override
@@ -105,6 +105,6 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void setAttribute(Path path, String s, Object o, LinkOption... linkOptions) throws IOException {
-      
+
     }
 }

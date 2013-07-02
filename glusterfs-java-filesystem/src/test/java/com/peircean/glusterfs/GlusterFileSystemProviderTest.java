@@ -7,7 +7,7 @@ import org.junit.Test;
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
 public class GlusterFileSystemProviderTest extends TestCase {
-    
+
     @Test
     public void testGetScheme() {
         GlusterFileSystemProvider p = new GlusterFileSystemProvider();

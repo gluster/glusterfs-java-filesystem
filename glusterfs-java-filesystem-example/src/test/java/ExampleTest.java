@@ -5,8 +5,8 @@ import org.junit.Test;
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
-public class ExampleTest extends TestCase{
-    
+public class ExampleTest extends TestCase {
+
     @Test
     public void testGetProvider() {
         Example.getProvider("gluster");

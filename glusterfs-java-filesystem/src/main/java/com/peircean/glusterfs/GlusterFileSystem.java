@@ -19,7 +19,7 @@ public class GlusterFileSystem extends FileSystem {
 
     @Override
     public void close() throws IOException {
-      
+
     }
 
     @Override
