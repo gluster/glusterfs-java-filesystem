@@ -27,7 +27,7 @@ public class Example {
 
         Path path = Paths.get("gluster://127.0.2.1:foo/");
         System.out.println(path.toString());
-        FileSystem fileSystem = FileSystems.newFileSystem(new URI("gluster://127.0.2.1:fo/"), null);
+        FileSystem fileSystem = FileSystems.newFileSystem(new URI("gluster://127.0.2.1:foo/"), null);
         // Doesn't look like much but tcpdump verifies this really does establish a new glusterfs client connection
         System.out.println(fileSystem.toString());
         fileSystem.close();
