@@ -2,7 +2,6 @@ package com.peircean.glusterfs;
 
 import junit.framework.TestCase;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>

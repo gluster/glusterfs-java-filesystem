@@ -1,6 +1,5 @@
 package com.peircean.glusterfs;
 
-import com.sun.nio.zipfs.ZipPath;
 import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
