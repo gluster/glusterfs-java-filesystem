@@ -31,5 +31,11 @@
         </plugins>
     </build>
 
-
+    <dependencies>
+        <dependency>
+            <groupId>org.fusesource.glfsjni</groupId>
+            <artifactId>glfsjni</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>

@@ -11,12 +11,16 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
 
+import static org.fusesource.glfsjni.internal.GLFS.*;
+
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
 public class GlusterFileSystemProvider extends FileSystemProvider {
 
     public static final String GLUSTER = "gluster";
+    public static final int GLUSTERD_PORT = 24007;
+    public static final String TCP = "tcp";
 
     @Override
     public String getScheme() {
@@ -25,7 +29,26 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileSystem newFileSystem(URI uri, Map<String, ?> stringMap) throws IOException {
-        return null;
+        String[] authority = uri.getAuthority().split(":");
+
+        String volname = authority[1];
+        long volptr = glfs_new(volname);
+        if (0 == volptr) {
+            throw new IllegalArgumentException("Failed to create new client for volume: " + volname);
+        }
+
+        String host = authority[0];
+        int setServer = glfs_set_volfile_server(volptr, TCP, host, GLUSTERD_PORT);
+        if (0 != setServer) {
+            throw new IllegalArgumentException("Failed to set server address: " + host);
+        }
+
+        int init = glfs_init(volptr);
+        if (0 != init) {
+            throw new IllegalArgumentException("Failed to initialize glusterfs client: " + uri.getAuthority());
+        }
+
+        return new GlusterFileSystem(this, host, volname, volptr);
     }
 
     @Override
@@ -106,5 +129,9 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     @Override
     public void setAttribute(Path path, String s, Object o, LinkOption... linkOptions) throws IOException {
 
+    }
+
+    int close(long vol) {
+        return glfs_fini(vol);
     }
 }
