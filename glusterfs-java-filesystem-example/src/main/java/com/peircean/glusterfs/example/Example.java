@@ -8,8 +8,9 @@ import java.nio.file.spi.FileSystemProvider;
 public class Example {
     public static FileSystemProvider getProvider(String scheme) {
         for (FileSystemProvider fsp : FileSystemProvider.installedProviders()) {
-            if (fsp.getScheme().equals(scheme))
+            if (fsp.getScheme().equals(scheme)) {
                 return fsp;
+            }
         }
         throw new IllegalArgumentException("No provider found for scheme: " + scheme);
     }
