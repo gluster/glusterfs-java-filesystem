@@ -6,7 +6,7 @@ import java.nio.file.spi.FileSystemProvider;
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
 public class Example {
-    private static FileSystemProvider getProvider(String scheme) {
+    public static FileSystemProvider getProvider(String scheme) {
         for (FileSystemProvider fsp : FileSystemProvider.installedProviders()) {
             if (fsp.getScheme().equals(scheme))
                 return fsp;
