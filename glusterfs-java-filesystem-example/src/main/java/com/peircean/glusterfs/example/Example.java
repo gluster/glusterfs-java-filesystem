@@ -27,7 +27,6 @@ public class Example {
         FileSystem fileSystem = FileSystems.newFileSystem(new URI("gluster://127.0.2.1:foo/"), null);
         FileStore store = fileSystem.getFileStores().iterator().next();
         System.out.println("TOTAL SPACE: " + store.getTotalSpace());
-        // Doesn't look like much but tcpdump verifies this really does establish a new glusterfs client connection
         System.out.println(fileSystem.toString());
         fileSystem.close();
     }
