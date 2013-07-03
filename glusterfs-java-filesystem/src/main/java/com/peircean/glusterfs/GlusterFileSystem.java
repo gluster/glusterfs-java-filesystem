@@ -7,6 +7,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -64,12 +65,15 @@ public class GlusterFileSystem extends FileSystem {
         GlusterPath root = new GlusterPath(this, "/");
         List<Path> list = new ArrayList<Path>(1);
         list.add(root);
-        return list;
+        return Collections.unmodifiableList(list);
     }
 
     @Override
     public Iterable<FileStore> getFileStores() {
-        throw new UnsupportedOperationException();
+        GlusterFileStore store = new GlusterFileStore(this);
+        List<FileStore> stores = new ArrayList<FileStore>(1);
+        stores.add(store);
+        return Collections.unmodifiableList(stores);
     }
 
     @Override

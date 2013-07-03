@@ -1,5 +1,8 @@
 package com.peircean.glusterfs;
 
+import org.fusesource.glfsjni.internal.GLFS;
+import org.fusesource.glfsjni.internal.structs.statvfs;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
@@ -29,26 +32,51 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileSystem newFileSystem(URI uri, Map<String, ?> stringMap) throws IOException {
-        String[] authority = uri.getAuthority().split(":");
+        String authorityString = uri.getAuthority();
+        String[] authority = parseAuthority(authorityString);
 
         String volname = authority[1];
-        long volptr = glfs_new(volname);
-        if (0 == volptr) {
-            throw new IllegalArgumentException("Failed to create new client for volume: " + volname);
+        long volptr = glfsNew(volname);
+
+        glfsSetVolfileServer(authority[0], volptr);
+
+        glfsInit(authorityString, volptr);
+
+        return new GlusterFileSystem(this, authority[0], volname, volptr);
+    }
+
+    String[] parseAuthority(String authority) {
+        if (!authority.contains(":")) {
+            throw new IllegalArgumentException("URI must be of the form 'gluster://server:volume/path");
+        }
+        String[] aarr = authority.split(":");
+        if (aarr.length != 2 || aarr[0].isEmpty() || aarr[1].isEmpty()) {
+            throw new IllegalArgumentException("URI must be of the form 'gluster://server:volume/path");
         }
 
-        String host = authority[0];
+        return aarr;
+    }
+
+    void glfsInit(String authorityString, long volptr) {
+        int init = glfs_init(volptr);
+        if (0 != init) {
+            throw new IllegalArgumentException("Failed to initialize glusterfs client: " + authorityString);
+        }
+    }
+
+    void glfsSetVolfileServer(String host, long volptr) {
         int setServer = glfs_set_volfile_server(volptr, TCP, host, GLUSTERD_PORT);
         if (0 != setServer) {
             throw new IllegalArgumentException("Failed to set server address: " + host);
         }
+    }
 
-        int init = glfs_init(volptr);
-        if (0 != init) {
-            throw new IllegalArgumentException("Failed to initialize glusterfs client: " + uri.getAuthority());
+    long glfsNew(String volname) {
+        long volptr = glfs_new(volname);
+        if (0 == volptr) {
+            throw new IllegalArgumentException("Failed to create new client for volume: " + volname);
         }
-
-        return new GlusterFileSystem(this, host, volname, volptr);
+        return volptr;
     }
 
     @Override
@@ -133,5 +161,19 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     int close(long volptr) {
         return glfs_fini(volptr);
+    }
+
+    public long getTotalSpace(long volptr) throws IOException {
+        statvfs buf = new statvfs();
+        GLFS.glfs_statvfs(volptr, "/", buf);
+        return buf.f_bsize*buf.f_blocks;
+    }
+
+    public long getUsableSpace(long volptr) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    public long getUnallocatedSpace(long volptr) throws IOException {
+        throw new UnsupportedOperationException();
     }
 }

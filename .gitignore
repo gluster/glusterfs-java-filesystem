@@ -11,3 +11,4 @@ target
 .classpath
 .settings
 eclipse-classes
+hs_err_pid*.log

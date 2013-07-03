@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
+import java.nio.file.FileStore;
 import java.nio.file.Path;
 import java.util.Iterator;
 
@@ -82,6 +83,15 @@ public class GlusterFileSystemTest extends TestCase {
         assertFalse(iterator.hasNext());
     }
 
+    @Test
+    public void testGetFileStores() {
+        GlusterFileStore correctStore = new GlusterFileStore(fileSystem);
+        Iterable<FileStore> stores = fileSystem.getFileStores();
+        Iterator<FileStore> iterator = stores.iterator();
+        assertEquals(correctStore, iterator.next());
+        assertFalse(iterator.hasNext());
+    }
+    
     @Test
     public void testGetPath() {
         Path correctPath = new GlusterPath(fileSystem, "/foo/bar/baz");
