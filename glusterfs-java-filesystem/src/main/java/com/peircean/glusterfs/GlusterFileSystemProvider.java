@@ -131,7 +131,7 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     }
 
-    int close(long vol) {
-        return glfs_fini(vol);
+    int close(long volptr) {
+        return glfs_fini(volptr);
     }
 }
