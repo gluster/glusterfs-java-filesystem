@@ -15,7 +15,6 @@ import java.util.Set;
  */
 @Getter(AccessLevel.PACKAGE)
 @Setter(AccessLevel.PACKAGE)
-@ToString(exclude = {"provider", "volptr"}, callSuper = false)
 @EqualsAndHashCode(exclude = {"provider", "volptr"}, callSuper = false)
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class GlusterFileSystem extends FileSystem {
@@ -70,31 +69,47 @@ public class GlusterFileSystem extends FileSystem {
 
     @Override
     public Iterable<FileStore> getFileStores() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Set<String> supportedFileAttributeViews() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Path getPath(String s, String... strings) {
-        return null;
+        boolean absolute = s.startsWith("/");
+        if (absolute) {
+            s = s.substring(1);
+        }
+        String[] parts;
+        if (null != strings && strings.length > 0) {
+            parts = new String[1 + strings.length];
+            parts[0] = s;
+            System.arraycopy(strings, 0, parts, 1, strings.length);
+        } else {
+            parts = new String[]{s};
+        }
+        return new GlusterPath(this, parts, absolute);
     }
 
     @Override
     public PathMatcher getPathMatcher(String s) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public UserPrincipalLookupService getUserPrincipalLookupService() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public WatchService newWatchService() throws IOException {
-        return null;
+        throw new UnsupportedOperationException();
+    }
+    
+    public String toString() {
+        return provider.getScheme() + "://" + host + ":" + volname;
     }
 }

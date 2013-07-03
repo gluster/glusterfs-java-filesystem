@@ -24,11 +24,18 @@ public class GlusterFileSystemTest extends TestCase {
     public static final String HOST = "123.45.67.89";
     @Mock
     private GlusterFileSystemProvider mockFileSystemProvider;
+    @Mock
+    private GlusterPath mockPath;
     private GlusterFileSystem fileSystem;
 
     @Before
     public void setUp() {
         fileSystem = new GlusterFileSystem(mockFileSystemProvider, HOST, VOLNAME, VOLPTR);
+    }
+    
+    @Test
+    public void testProvider() {
+        assertEquals(mockFileSystemProvider, fileSystem.provider());
     }
 
     @Test(expected = IOException.class)
@@ -57,10 +64,15 @@ public class GlusterFileSystemTest extends TestCase {
     }
 
     @Test
+    public void testIsReadOnly() {
+        assertFalse(fileSystem.isReadOnly());
+    }
+
+    @Test
     public void testGetSeparator() {
         assertEquals("/", fileSystem.getSeparator());
     }
-    
+
     @Test
     public void testGetRootDirectories() {
         Iterable<Path> pi = fileSystem.getRootDirectories();
@@ -69,5 +81,19 @@ public class GlusterFileSystemTest extends TestCase {
         assertEquals(path, iterator.next());
         assertFalse(iterator.hasNext());
     }
-    
+
+    @Test
+    public void testGetPath() {
+        Path correctPath = new GlusterPath(fileSystem, "/foo/bar/baz");
+        Path returnedPath = fileSystem.getPath("/foo", "bar", "baz");
+        assertEquals(correctPath, returnedPath);
+    }
+
+    @Test
+    public void testToString() {
+        doReturn("gluster").when(mockFileSystemProvider).getScheme();
+        String string = "gluster://" + HOST + ":" + VOLNAME;
+        assertEquals(string, fileSystem.toString());
+        verify(mockFileSystemProvider).getScheme();
+    }
 }
