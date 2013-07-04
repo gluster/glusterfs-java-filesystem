@@ -57,11 +57,12 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
         return aarr;
     }
 
-    void glfsInit(String authorityString, long volptr) {
-        int init = glfs_init(volptr);
-        if (0 != init) {
-            throw new IllegalArgumentException("Failed to initialize glusterfs client: " + authorityString);
+    long glfsNew(String volname) {
+        long volptr = glfs_new(volname);
+        if (0 == volptr) {
+            throw new IllegalArgumentException("Failed to create new client for volume: " + volname);
         }
+        return volptr;
     }
 
     void glfsSetVolfileServer(String host, long volptr) {
@@ -71,12 +72,11 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
         }
     }
 
-    long glfsNew(String volname) {
-        long volptr = glfs_new(volname);
-        if (0 == volptr) {
-            throw new IllegalArgumentException("Failed to create new client for volume: " + volname);
+    void glfsInit(String authorityString, long volptr) {
+        int init = glfs_init(volptr);
+        if (0 != init) {
+            throw new IllegalArgumentException("Failed to initialize glusterfs client: " + authorityString);
         }
-        return volptr;
     }
 
     @Override

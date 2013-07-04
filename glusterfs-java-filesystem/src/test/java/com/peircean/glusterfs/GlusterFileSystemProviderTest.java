@@ -53,6 +53,87 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verify(provider).glfsInit(authority, volptr);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseAuthority_whenNoColon() {
+        provider.parseAuthority("a");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseAuthority_whenEmptyHost() {
+        provider.parseAuthority(":b");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseAuthority_whenEmptyVolume() {
+        provider.parseAuthority("a:");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseAuthority_whenBadSplit() {
+        provider.parseAuthority("a:b:c");
+    }
+
+    @Test
+    public void testParseAuthority() {
+        String[] actual = provider.parseAuthority("a:b");
+        assertEquals("a", actual[0]);
+        assertEquals("b", actual[1]);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGlfsNew_whenBad() {
+        mockStatic(GLFS.class);
+        when(GLFS.glfs_new(VOLNAME)).thenReturn(0l);
+        provider.glfsNew(VOLNAME);
+    }
+
+    @Test
+    public void testGlfsNew() {
+        mockStatic(GLFS.class);
+        when(GLFS.glfs_new(VOLNAME)).thenReturn(123l);
+        long l = provider.glfsNew(VOLNAME);
+        verifyStatic();
+        GLFS.glfs_new(VOLNAME);
+        assertEquals(l, 123l);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGlfsSetVolfileServer_whenBad() {
+        mockStatic(GLFS.class);
+        String host = "123.45.67.89";
+        when(GLFS.glfs_set_volfile_server(123l, "tcp", host, 24007)).thenReturn(-1);
+        provider.glfsSetVolfileServer(host, 123l);
+    }
+
+    @Test
+    public void testGlfsSetVolfileServer() {
+        mockStatic(GLFS.class);
+        String host = "123.45.67.89";
+        when(GLFS.glfs_set_volfile_server(123l, "tcp", host, 24007)).thenReturn(0);
+        provider.glfsSetVolfileServer(host, 123l);
+        verifyStatic();
+        GLFS.glfs_set_volfile_server(123l, "tcp", host, 24007);
+
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGlfsInit_whenBad() {
+        mockStatic(GLFS.class);
+        String host = "123.45.67.89";
+        when(GLFS.glfs_init(123l)).thenReturn(-1);
+        provider.glfsInit(host, 123l);
+    }
+
+    @Test
+    public void testGlfsInit() {
+        mockStatic(GLFS.class);
+        String host = "123.45.67.89";
+        when(GLFS.glfs_init(123l)).thenReturn(0);
+        provider.glfsInit(host, 123l);
+        verifyStatic();
+        GLFS.glfs_init(123l);
+    }
+
     @Test
     public void testGetTotalSpace() throws Exception {
         mockStatic(GLFS.class);

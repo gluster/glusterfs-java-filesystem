@@ -22,9 +22,10 @@ public class Example {
     public static void main(String[] args) throws URISyntaxException, IOException {
         System.out.println(getProvider("gluster").toString());
 
-        Path path = Paths.get("gluster://127.0.2.1:foo/");
+        String testUri = "gluster://127.0.2.1:foo/";
+        Path path = Paths.get(testUri);
         System.out.println(path.toString());
-        FileSystem fileSystem = FileSystems.newFileSystem(new URI("gluster://127.0.2.1:foo/"), null);
+        FileSystem fileSystem = FileSystems.newFileSystem(new URI(testUri), null);
         FileStore store = fileSystem.getFileStores().iterator().next();
         System.out.println("TOTAL SPACE: " + store.getTotalSpace());
         System.out.println(fileSystem.toString());
