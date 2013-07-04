@@ -163,19 +163,19 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
         return glfs_fini(volptr);
     }
 
-    public long getTotalSpace(long volptr) throws IOException {
+    long getTotalSpace(long volptr) throws IOException {
         statvfs buf = new statvfs();
         GLFS.glfs_statvfs(volptr, "/", buf);
         return buf.f_bsize*buf.f_blocks;
     }
 
-    public long getUsableSpace(long volptr) throws IOException {
+    long getUsableSpace(long volptr) throws IOException {
         statvfs buf = new statvfs();
         GLFS.glfs_statvfs(volptr, "/", buf);
         return buf.f_bsize*buf.f_bavail;
     }
 
-    public long getUnallocatedSpace(long volptr) throws IOException {
+    long getUnallocatedSpace(long volptr) throws IOException {
         statvfs buf = new statvfs();
         GLFS.glfs_statvfs(volptr, "/", buf);
         return buf.f_bsize*buf.f_bfree;
