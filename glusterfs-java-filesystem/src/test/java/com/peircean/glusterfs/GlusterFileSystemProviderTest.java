@@ -151,4 +151,38 @@ public class GlusterFileSystemProviderTest extends TestCase {
         assertEquals(buf.f_bsize * buf.f_blocks, totalSpace);
     }
 
+    @Test
+    public void testGetUsableSpace() throws Exception {
+        mockStatic(GLFS.class);
+        long volptr = 1234l;
+        String path = "/";
+        statvfs buf = new statvfs();
+        buf.f_bsize = 2;
+        buf.f_bavail = 1000000l;
+        whenNew(statvfs.class).withNoArguments().thenReturn(buf);
+        when(GLFS.glfs_statvfs(volptr, path, buf)).thenReturn(0);
+        long usableSpace = provider.getUsableSpace(volptr);
+        verifyStatic();
+        GLFS.glfs_statvfs(volptr, path, buf);
+        verifyNew(statvfs.class).withNoArguments();
+        assertEquals(buf.f_bsize * buf.f_bavail, usableSpace);
+    }
+
+    @Test
+    public void testGetUnallocatedSpace() throws Exception {
+        mockStatic(GLFS.class);
+        long volptr = 1234l;
+        String path = "/";
+        statvfs buf = new statvfs();
+        buf.f_bsize = 2;
+        buf.f_bfree= 1000000l;
+        whenNew(statvfs.class).withNoArguments().thenReturn(buf);
+        when(GLFS.glfs_statvfs(volptr, path, buf)).thenReturn(0);
+        long unallocatedSpace = provider.getUnallocatedSpace(volptr);
+        verifyStatic();
+        GLFS.glfs_statvfs(volptr, path, buf);
+        verifyNew(statvfs.class).withNoArguments();
+        assertEquals(buf.f_bsize * buf.f_bfree, unallocatedSpace);
+    }
+
 }

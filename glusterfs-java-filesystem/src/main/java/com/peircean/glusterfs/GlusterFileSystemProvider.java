@@ -170,10 +170,14 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     }
 
     public long getUsableSpace(long volptr) throws IOException {
-        throw new UnsupportedOperationException();
+        statvfs buf = new statvfs();
+        GLFS.glfs_statvfs(volptr, "/", buf);
+        return buf.f_bsize*buf.f_bavail;
     }
 
     public long getUnallocatedSpace(long volptr) throws IOException {
-        throw new UnsupportedOperationException();
+        statvfs buf = new statvfs();
+        GLFS.glfs_statvfs(volptr, "/", buf);
+        return buf.f_bsize*buf.f_bfree;
     }
 }
