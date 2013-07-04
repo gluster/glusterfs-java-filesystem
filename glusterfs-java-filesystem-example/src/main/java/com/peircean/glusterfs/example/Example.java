@@ -28,6 +28,8 @@ public class Example {
         FileSystem fileSystem = FileSystems.newFileSystem(new URI(testUri), null);
         FileStore store = fileSystem.getFileStores().iterator().next();
         System.out.println("TOTAL SPACE: " + store.getTotalSpace());
+        System.out.println("USABLE SPACE: " + store.getUsableSpace());
+        System.out.println("UNALLOCATED SPACE: " + store.getUnallocatedSpace());
         System.out.println(fileSystem.toString());
         fileSystem.close();
     }
