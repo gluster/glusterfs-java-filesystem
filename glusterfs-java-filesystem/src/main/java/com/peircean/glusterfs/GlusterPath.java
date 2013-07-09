@@ -5,6 +5,7 @@ import lombok.Data;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.*;
 import java.util.*;
 
@@ -238,7 +239,11 @@ public class GlusterPath implements Path {
 
     @Override
     public URI toUri() {
-        throw new UnsupportedOperationException();
+        try {
+            return new URI(toString());
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override

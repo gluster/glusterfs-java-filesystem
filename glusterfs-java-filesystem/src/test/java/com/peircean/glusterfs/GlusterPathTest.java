@@ -7,6 +7,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -105,6 +107,15 @@ public class GlusterPathTest extends TestCase {
     public void testGetFilesystem() {
         Path p = new GlusterPath(mockFileSystem, "foo/bar");
         assertTrue(p.getFileSystem() == mockFileSystem);
+    }
+    
+    @Test
+    public void testToUri() throws URISyntaxException {
+        String fileSystemUri = "gluster://123.45.67.89:testvol";
+        doReturn(fileSystemUri).when(mockFileSystem).toString();
+        String path = "/foo/bar";
+        Path p = new GlusterPath(mockFileSystem, path);
+        assertEquals(new URI(fileSystemUri+path), p.toUri());
     }
 
     @Test

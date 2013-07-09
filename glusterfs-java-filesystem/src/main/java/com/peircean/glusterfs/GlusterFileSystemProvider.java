@@ -1,16 +1,20 @@
 package com.peircean.glusterfs;
 
+import lombok.AccessLevel;
+import lombok.Getter;
 import org.fusesource.glfsjni.internal.GLFS;
 import org.fusesource.glfsjni.internal.structs.statvfs;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,6 +28,8 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     public static final String GLUSTER = "gluster";
     public static final int GLUSTERD_PORT = 24007;
     public static final String TCP = "tcp";
+    @Getter(AccessLevel.PACKAGE)
+    private static Map<String, GlusterFileSystem> cache = new HashMap<String, GlusterFileSystem>();
 
     @Override
     public String getScheme() {
@@ -42,7 +48,12 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
         glfsInit(authorityString, volptr);
 
-        return new GlusterFileSystem(this, authority[0], volname, volptr);
+        GLFS.glfs_set_logging(volptr, "/tmp/gluster-java.log", 9);
+
+        GlusterFileSystem fileSystem = new GlusterFileSystem(this, authority[0], volname, volptr);
+        cache.put(authorityString, fileSystem);
+
+        return fileSystem;
     }
 
     String[] parseAuthority(String authority) {
@@ -81,7 +92,7 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileSystem getFileSystem(URI uri) {
-        return null;
+        return cache.get(uri.getAuthority());
     }
 
     @Override
@@ -91,7 +102,18 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> openOptions, FileAttribute<?>... fileAttributes) throws IOException {
-        return null;
+        return newFileChannelHelper(path, openOptions, fileAttributes);
+    }
+
+    @Override
+    public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+        return newFileChannelHelper(path, options, attrs);
+    }
+
+    FileChannel newFileChannelHelper(Path path, Set<? extends OpenOption> options, FileAttribute<?>[] attrs) throws IOException {
+        GlusterFileChannel channel = new GlusterFileChannel();
+        channel.init((GlusterFileSystem) getFileSystem(path.toUri()), path, options, attrs);
+        return channel;
     }
 
     @Override
@@ -166,18 +188,18 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     long getTotalSpace(long volptr) throws IOException {
         statvfs buf = new statvfs();
         GLFS.glfs_statvfs(volptr, "/", buf);
-        return buf.f_bsize*buf.f_blocks;
+        return buf.f_bsize * buf.f_blocks;
     }
 
     long getUsableSpace(long volptr) throws IOException {
         statvfs buf = new statvfs();
         GLFS.glfs_statvfs(volptr, "/", buf);
-        return buf.f_bsize*buf.f_bavail;
+        return buf.f_bsize * buf.f_bavail;
     }
 
     long getUnallocatedSpace(long volptr) throws IOException {
         statvfs buf = new statvfs();
         GLFS.glfs_statvfs(volptr, "/", buf);
-        return buf.f_bsize*buf.f_bfree;
+        return buf.f_bsize * buf.f_bfree;
     }
 }

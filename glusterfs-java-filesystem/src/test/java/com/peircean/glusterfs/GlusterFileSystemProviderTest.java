@@ -5,6 +5,7 @@ import org.fusesource.glfsjni.internal.GLFS;
 import org.fusesource.glfsjni.internal.structs.statvfs;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Spy;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -12,6 +13,13 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.FileChannel;
+import java.nio.file.FileSystem;
+import java.nio.file.OpenOption;
+import java.nio.file.attribute.FileAttribute;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -23,11 +31,17 @@ import static org.powermock.api.mockito.PowerMockito.*;
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({GLFS.class, GlusterFileSystemProvider.class})
+@PrepareForTest({GLFS.class, GlusterFileSystemProvider.class, GlusterFileChannel.class})
 public class GlusterFileSystemProviderTest extends TestCase {
 
     public static final String SERVER = "hostname";
     public static final String VOLNAME = "testvol";
+    @Mock
+    private GlusterFileSystem mockFileSystem;
+    @Mock
+    private GlusterPath mockPath;
+    @Mock
+    private GlusterFileChannel mockChannel;
     @Spy
     private GlusterFileSystemProvider provider = new GlusterFileSystemProvider();
 
@@ -46,11 +60,13 @@ public class GlusterFileSystemProviderTest extends TestCase {
         doNothing().when(provider).glfsSetVolfileServer(SERVER, volptr);
         doNothing().when(provider).glfsInit(authority, volptr);
         URI uri = new URI("gluster://" + authority);
-        provider.newFileSystem(uri, null);
+        FileSystem fileSystem = provider.newFileSystem(uri, null);
         verify(provider).parseAuthority(authority);
         verify(provider).glfsNew(VOLNAME);
         verify(provider).glfsSetVolfileServer(SERVER, volptr);
         verify(provider).glfsInit(authority, volptr);
+        assertTrue(provider.getCache().containsKey(authority));
+        assertEquals(fileSystem, provider.getCache().get(authority));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -135,6 +151,49 @@ public class GlusterFileSystemProviderTest extends TestCase {
     }
 
     @Test
+    public void testGetFileSystem() throws URISyntaxException {
+        provider.getCache().put("foo:bar", mockFileSystem);
+        assertEquals(mockFileSystem, provider.getFileSystem(new URI("gluster://foo:bar/baz")));
+    }
+
+    @Test
+    public void testNewFileChannel() throws Exception {
+        FileAttribute<?>[] attrs = new FileAttribute[0];
+        Set<? extends OpenOption> opts = new HashSet<OpenOption>();
+        doReturn(mockChannel).when(provider).newFileChannelHelper(mockPath, opts, attrs);
+        FileChannel fileChannel = provider.newFileChannel(mockPath, opts, attrs);
+        verify(provider).newFileChannelHelper(mockPath, opts, attrs);
+        assertEquals(mockChannel, fileChannel);
+    }
+
+    @Test
+    public void testNewByteChannel() throws Exception {
+        FileAttribute<?>[] attrs = new FileAttribute[0];
+        Set<? extends OpenOption> opts = new HashSet<OpenOption>();
+        doReturn(mockChannel).when(provider).newFileChannelHelper(mockPath, opts, attrs);
+        ByteChannel fileChannel = provider.newByteChannel(mockPath, opts, attrs);
+        verify(provider).newFileChannelHelper(mockPath, opts, attrs);
+        assertEquals(mockChannel, fileChannel);
+    }
+
+    @Test
+    public void testNewFileChannelHelper() throws Exception {
+        Set<? extends OpenOption> options = new HashSet<OpenOption>();
+        FileAttribute<?> attrs[] = new FileAttribute[0];
+        URI uri = new URI("foo://bar/baz");
+        doReturn(uri).when(mockPath).toUri();
+        doReturn(mockFileSystem).when(provider).getFileSystem(uri);
+        whenNew(GlusterFileChannel.class).withNoArguments().thenReturn(mockChannel);
+        doNothing().when(mockChannel).init(mockFileSystem, mockPath, options, attrs);
+        FileChannel channel = provider.newFileChannel(mockPath, options, attrs);
+        verify(mockChannel).init(mockFileSystem, mockPath, options, attrs);
+        verify(provider).getFileSystem(uri);
+        verify(mockPath).toUri();
+        verifyNew(GlusterFileChannel.class).withNoArguments();
+        assertEquals(mockChannel, channel);
+    }
+
+    @Test
     public void testGetTotalSpace() throws Exception {
         mockStatic(GLFS.class);
         long volptr = 1234l;
@@ -175,7 +234,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         String path = "/";
         statvfs buf = new statvfs();
         buf.f_bsize = 2;
-        buf.f_bfree= 1000000l;
+        buf.f_bfree = 1000000l;
         whenNew(statvfs.class).withNoArguments().thenReturn(buf);
         when(GLFS.glfs_statvfs(volptr, path, buf)).thenReturn(0);
         long unallocatedSpace = provider.getUnallocatedSpace(volptr);
