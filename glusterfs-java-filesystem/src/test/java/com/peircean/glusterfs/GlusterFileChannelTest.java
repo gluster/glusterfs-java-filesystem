@@ -129,10 +129,10 @@ public class GlusterFileChannelTest extends TestCase {
 
     @Test
     public void testParseAttributes() {
-        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rw-rw-rw-");
+        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwxrwxrwx");
         FileAttribute<Set<PosixFilePermission>> attribute = PosixFilePermissions.asFileAttribute(permissions);
         int mode = channel.parseAttrs(attribute);
-        assertEquals(0666, mode);
+        assertEquals(0777, mode);
     }
 
 }
