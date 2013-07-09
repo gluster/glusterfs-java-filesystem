@@ -44,7 +44,9 @@ public class Example {
         FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(posixFilePermissions);
 
         Path glusterPath = fileSystem.getPath("/baz");
-        Files.createFile(glusterPath, attrs);
+//        Files.createFile(glusterPath, attrs);
+        OpenOption options ;
+        Files.write(glusterPath, "Hello, world!".getBytes());
         fileSystem.close();
     }
 }

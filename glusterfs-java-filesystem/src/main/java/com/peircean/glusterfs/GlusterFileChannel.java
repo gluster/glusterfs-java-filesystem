@@ -60,7 +60,9 @@ public class GlusterFileChannel extends FileChannel {
         String pathString = path.toUri().getPath();
         if (options.contains(StandardOpenOption.CREATE) || options.contains(StandardOpenOption.CREATE_NEW)) {
             fileptr = GLFS.glfs_creat(fileSystem.getVolptr(), pathString, flags, mode);
-        } else {
+        }
+        
+        if (0 == fileptr) {
             fileptr = GLFS.glfs_open(fileSystem.getVolptr(), pathString, flags);
         }
 

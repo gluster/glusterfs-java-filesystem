@@ -40,34 +40,34 @@ public class GlusterFileChannelTest extends TestCase {
     @Test(expected = IllegalStateException.class)
     public void testNewFileChannel_whenNotAbsolutePath() throws IOException, URISyntaxException {
         doReturn(false).when(mockPath).isAbsolute();
-        initTestHelper(null, true);
+        initTestHelper(null, false, false);
     }
 
     @Test
     public void testNewFileChannel_whenCreate() throws IOException, URISyntaxException {
         doReturn(true).when(mockPath).isAbsolute();
-        initTestHelper(StandardOpenOption.CREATE, true);
+        initTestHelper(StandardOpenOption.CREATE, true, false);
     }
 
     @Test
     public void testNewFileChannel_whenCreateNew() throws IOException, URISyntaxException {
         doReturn(true).when(mockPath).isAbsolute();
-        initTestHelper(StandardOpenOption.CREATE_NEW, true);
+        initTestHelper(StandardOpenOption.CREATE_NEW, true, false);
     }
 
     @Test
     public void testNewFileChannel_whenNotCreating() throws IOException, URISyntaxException {
         doReturn(true).when(mockPath).isAbsolute();
-        initTestHelper(null, true);
+        initTestHelper(null, false, true);
     }
 
     @Test(expected = IOException.class)
     public void testNewFileChannel_whenFailing() throws IOException, URISyntaxException {
         doReturn(true).when(mockPath).isAbsolute();
-        initTestHelper(null, false);
+        initTestHelper(null, false, false);
     }
 
-    private void initTestHelper(StandardOpenOption option, boolean successful) throws IOException, URISyntaxException {
+    private void initTestHelper(StandardOpenOption option, boolean created, boolean opened) throws IOException, URISyntaxException {
         Set<StandardOpenOption> options = new HashSet<StandardOpenOption>();
         options.add(StandardOpenOption.WRITE);
         if (null != option) {
@@ -81,7 +81,8 @@ public class GlusterFileChannelTest extends TestCase {
         int flags = GlusterOpenOption.WRITE().create().getValue();
         long volptr = 1234l;
         String path = "/foo/bar";
-        long fileptr = successful ? 4321l : 0;
+        long createptr = created ? 4321l : 0;
+        long openptr = opened ? 4321l : 0;
         URI pathUri = new URI("gluster://server:volume" + path);
         doReturn(volptr).when(mockFileSystem).getVolptr();
         doReturn(pathUri).when(mockPath).toUri();
@@ -90,9 +91,9 @@ public class GlusterFileChannelTest extends TestCase {
 
         PowerMockito.mockStatic(GLFS.class);
         if (null != option) {
-            when(GLFS.glfs_creat(volptr, path, flags, mode)).thenReturn(fileptr);
+            when(GLFS.glfs_creat(volptr, path, flags, mode)).thenReturn(createptr);
         } else {
-            when(GLFS.glfs_open(volptr, path, flags)).thenReturn(fileptr);
+            when(GLFS.glfs_open(volptr, path, flags)).thenReturn(openptr);
         }
 
         channel.init(mockFileSystem, mockPath, options, attrs);
