@@ -45,7 +45,6 @@ public class Example {
 
         Path glusterPath = fileSystem.getPath("/baz");
 //        Files.createFile(glusterPath, attrs);
-        OpenOption options ;
         Files.write(glusterPath, "Hello, world!".getBytes());
         fileSystem.close();
     }
