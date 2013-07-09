@@ -2,7 +2,6 @@ package com.peircean.glusterfs;
 
 import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.fusesource.glfsjni.internal.GLFS;
 import org.fusesource.glfsjni.internal.GlusterOpenOption;
@@ -29,8 +28,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class GlusterFileChannel extends FileChannel {
-    @Getter
-    public static Map<StandardOpenOption, Integer> optionMap = new HashMap<StandardOpenOption, Integer>();
+    public static final Map<StandardOpenOption, Integer> optionMap = new HashMap<StandardOpenOption, Integer>();
 
     static {
         optionMap.put(StandardOpenOption.APPEND, GlusterOpenOption.O_APPEND);
@@ -112,10 +110,10 @@ public class GlusterFileChannel extends FileChannel {
     int parseOptions(Set<? extends OpenOption> options) {
         int opt = 0;
         for (OpenOption o : options) {
-            if (!getOptionMap().containsKey(o)) {
+            if (!optionMap.containsKey(o)) {
                 throw new UnsupportedOperationException("Option " + o + " is not supported at this time");
             }
-            opt |= getOptionMap().get(o);
+            opt |= optionMap.get(o);
         }
         return opt;
     }
