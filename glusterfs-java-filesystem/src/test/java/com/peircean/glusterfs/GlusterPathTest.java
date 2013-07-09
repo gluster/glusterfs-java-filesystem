@@ -108,14 +108,14 @@ public class GlusterPathTest extends TestCase {
         Path p = new GlusterPath(mockFileSystem, "foo/bar");
         assertTrue(p.getFileSystem() == mockFileSystem);
     }
-    
+
     @Test
     public void testToUri() throws URISyntaxException {
         String fileSystemUri = "gluster://123.45.67.89:testvol";
         doReturn(fileSystemUri).when(mockFileSystem).toString();
         String path = "/foo/bar";
         Path p = new GlusterPath(mockFileSystem, path);
-        assertEquals(new URI(fileSystemUri+path), p.toUri());
+        assertEquals(new URI(fileSystemUri + path), p.toUri());
     }
 
     @Test

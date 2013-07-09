@@ -14,13 +14,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import static org.mockito.Mockito.*;
@@ -44,7 +42,7 @@ public class GlusterFileChannelTest extends TestCase {
         doReturn(false).when(mockPath).isAbsolute();
         initTestHelper(null, true);
     }
-    
+
     @Test
     public void testNewFileChannel_whenCreate() throws IOException, URISyntaxException {
         doReturn(true).when(mockPath).isAbsolute();
@@ -117,18 +115,18 @@ public class GlusterFileChannelTest extends TestCase {
             GLFS.glfs_open(volptr, path, flags);
         }
     }
-    
+
     @Test
     public void testParseOptions() {
         Set<StandardOpenOption> options = new HashSet<StandardOpenOption>();
         options.add(StandardOpenOption.APPEND);
         options.add(StandardOpenOption.WRITE);
-        
+
         int result = channel.parseOptions(options);
-        
-        assertEquals(GlusterOpenOption.O_RDWR|GlusterOpenOption.O_APPEND, result);
+
+        assertEquals(GlusterOpenOption.O_RDWR | GlusterOpenOption.O_APPEND, result);
     }
-    
+
     @Test
     public void testParseAttributes() {
         Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rw-rw-rw-");

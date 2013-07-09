@@ -33,7 +33,7 @@ public class GlusterFileSystemTest extends TestCase {
     public void setUp() {
         fileSystem = new GlusterFileSystem(mockFileSystemProvider, HOST, VOLNAME, VOLPTR);
     }
-    
+
     @Test
     public void testProvider() {
         assertEquals(mockFileSystemProvider, fileSystem.provider());
@@ -91,7 +91,7 @@ public class GlusterFileSystemTest extends TestCase {
         assertEquals(correctStore, iterator.next());
         assertFalse(iterator.hasNext());
     }
-    
+
     @Test
     public void testGetPath() {
         Path correctPath = new GlusterPath(fileSystem, "/foo/bar/baz");

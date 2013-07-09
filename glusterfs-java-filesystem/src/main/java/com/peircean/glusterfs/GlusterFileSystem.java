@@ -112,7 +112,7 @@ public class GlusterFileSystem extends FileSystem {
     public WatchService newWatchService() throws IOException {
         throw new UnsupportedOperationException();
     }
-    
+
     public String toString() {
         return provider.getScheme() + "://" + host + ":" + volname;
     }

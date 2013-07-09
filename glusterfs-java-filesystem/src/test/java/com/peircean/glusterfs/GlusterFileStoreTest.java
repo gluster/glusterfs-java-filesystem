@@ -11,7 +11,6 @@ import java.io.IOException;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
