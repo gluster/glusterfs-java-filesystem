@@ -26,10 +26,10 @@ public class GlusterFileAttributes implements PosixFileAttributes {
     }
 
     private final int mode, uid, gid;
-    private final long size, atime, ctime, mtime;
+    private final long size, atime, ctime, mtime, inode;
 
     public static GlusterFileAttributes fromStat(stat stat) {
-        return new GlusterFileAttributes(stat.st_mode, stat.st_uid, stat.st_gid, stat.st_size, 0, 0, 0);
+        return new GlusterFileAttributes(stat.st_mode, stat.st_uid, stat.st_gid, stat.st_size, 0, 0, 0, stat.st_ino);
     }
 
     @Override
@@ -108,6 +108,6 @@ public class GlusterFileAttributes implements PosixFileAttributes {
 
     @Override
     public Object fileKey() {
-        throw new UnsupportedOperationException("Not yet implemented");
+        return inode;
     }
 }

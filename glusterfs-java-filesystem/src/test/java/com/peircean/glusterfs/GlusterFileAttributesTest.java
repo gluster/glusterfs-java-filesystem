@@ -18,7 +18,8 @@ public class GlusterFileAttributesTest extends TestCase {
     public static final long ATIME = 54321l;
     public static final long CTIME = 54322l;
     public static final long MTIME = 54323l;
-    private GlusterFileAttributes attrib = new GlusterFileAttributes(MODE, UID, GID, SIZE, ATIME, CTIME, MTIME);
+    public static final long INODE = 4452352l;
+    private GlusterFileAttributes attrib = new GlusterFileAttributes(MODE, UID, GID, SIZE, ATIME, CTIME, MTIME, INODE);
 
     @Test
     public void testOwner() {
@@ -59,25 +60,30 @@ public class GlusterFileAttributesTest extends TestCase {
 
     @Test
     public void testIsSymbolic() {
-        attrib = new GlusterFileAttributes(0120777, UID, GID, SIZE, ATIME, CTIME, MTIME);
+        attrib = new GlusterFileAttributes(0120777, UID, GID, SIZE, ATIME, CTIME, MTIME, INODE);
         assertTrue(attrib.isSymbolicLink());
     }
 
     @Test
     public void testIsDirectory() {
-        attrib = new GlusterFileAttributes(0040777, UID, GID, SIZE, ATIME, CTIME, MTIME);
+        attrib = new GlusterFileAttributes(0040777, UID, GID, SIZE, ATIME, CTIME, MTIME, INODE);
         assertTrue(attrib.isDirectory());
     }
 
     @Test
     public void testIsOther() {
-        attrib = new GlusterFileAttributes(0000777, UID, GID, SIZE, ATIME, CTIME, MTIME);
+        attrib = new GlusterFileAttributes(0000777, UID, GID, SIZE, ATIME, CTIME, MTIME, INODE);
         assertTrue(attrib.isOther());
     }
 
     @Test
     public void testSize() {
         assertEquals(SIZE, attrib.size());
+    }
+    
+    @Test
+    public void testFileKey() {
+        assertEquals(INODE, attrib.fileKey());
     }
     
     @Test 
@@ -87,6 +93,7 @@ public class GlusterFileAttributesTest extends TestCase {
         stat.st_gid = GID;
         stat.st_uid = UID;
         stat.st_mode = MODE;
+        stat.st_ino = INODE;
 
         GlusterFileAttributes attr = GlusterFileAttributes.fromStat(stat);
         
@@ -94,5 +101,6 @@ public class GlusterFileAttributesTest extends TestCase {
         assertEquals(stat.st_uid, attr.getUid());
         assertEquals(stat.st_gid, attr.getGid());
         assertEquals(stat.st_mode, attr.getMode());
+        assertEquals(stat.st_ino, attr.getInode());        
     }
 }

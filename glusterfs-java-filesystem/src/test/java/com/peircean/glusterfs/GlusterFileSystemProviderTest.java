@@ -256,7 +256,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         whenNew(stat.class).withNoArguments().thenReturn(stat);
 
         mockStatic(GlusterFileAttributes.class);
-        GlusterFileAttributes fakeAttributes = new GlusterFileAttributes(123, 234, 345, 12345l, 222111l, 121212l, 212121);
+        GlusterFileAttributes fakeAttributes = new GlusterFileAttributes(123, 234, 345, 12345l, 222111l, 121212l, 212121, 2234231l);
         when(GlusterFileAttributes.fromStat(stat)).thenReturn(fakeAttributes);
 
         mockStatic(GLFS.class);
@@ -293,7 +293,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         whenNew(stat.class).withNoArguments().thenReturn(stat);
 
         mockStatic(GlusterFileAttributes.class);
-        GlusterFileAttributes fakeAttributes = new GlusterFileAttributes(123, 234, 345, 12345l, 222111l, 121212l, 212121);
+        GlusterFileAttributes fakeAttributes = new GlusterFileAttributes(123, 234, 345, 12345l, 222111l, 121212l, 212121, 2341341l);
         when(GlusterFileAttributes.fromStat(stat)).thenReturn(fakeAttributes);
 
         mockStatic(GLFS.class);
