@@ -5,6 +5,8 @@ import org.fusesource.glfsjni.internal.GLFS;
 import org.fusesource.glfsjni.internal.GlusterOpenOption;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.powermock.api.mockito.PowerMockito;
@@ -14,6 +16,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
@@ -34,6 +38,18 @@ public class GlusterFileChannelTest extends TestCase {
     private GlusterPath mockPath;
     @Mock
     private GlusterFileSystem mockFileSystem;
+    @Mock
+    private ByteBuffer mockBuffer;
+    @Captor
+    private ArgumentCaptor<Long> fileptrCaptor;
+    @Captor
+    private ArgumentCaptor<Integer> flagsCaptor;
+    @Captor
+    private ArgumentCaptor<Integer> lengthCaptor;
+    @Captor
+    private ArgumentCaptor<byte[]> inputByteArrayCaptor;
+    @Captor
+    private ArgumentCaptor<byte[]> outputByteArrayCaptor;
     @Spy
     private GlusterFileChannel channel = new GlusterFileChannel();
 
@@ -53,6 +69,12 @@ public class GlusterFileChannelTest extends TestCase {
     public void testNewFileChannel_whenCreateNew() throws IOException, URISyntaxException {
         doReturn(true).when(mockPath).isAbsolute();
         initTestHelper(StandardOpenOption.CREATE_NEW, true, false);
+    }
+
+    @Test(expected = FileAlreadyExistsException.class)
+    public void testNewFileChannel_whenCreateNew_andFileAlreadyExists() throws IOException, URISyntaxException {
+        doReturn(true).when(mockPath).isAbsolute();
+        initTestHelper(StandardOpenOption.CREATE_NEW, false, false);
     }
 
     @Test
@@ -134,6 +156,43 @@ public class GlusterFileChannelTest extends TestCase {
         FileAttribute<Set<PosixFilePermission>> attribute = PosixFilePermissions.asFileAttribute(permissions);
         int mode = channel.parseAttrs(attribute);
         assertEquals(0777, mode);
+    }
+
+    @Test
+    public void testWrite1Arg() throws IOException {
+        channel.setFileptr(1234l);
+
+        PowerMockito.mockStatic(GLFS.class);
+        int bufferLength = 3;
+        when(GLFS.glfs_write(fileptrCaptor.capture(), outputByteArrayCaptor.capture(), lengthCaptor.capture(),
+                flagsCaptor.capture())).thenReturn(bufferLength);
+
+        doReturn(null).when(mockBuffer).rewind();
+        doReturn(bufferLength).when(mockBuffer).remaining();
+        doReturn(null).when(mockBuffer).get(inputByteArrayCaptor.capture());
+
+        int written = channel.write(mockBuffer);
+
+        byte[] inputByteArray = inputByteArrayCaptor.getValue();
+        assertEquals(inputByteArray.length, written);
+
+        assertEquals(bufferLength, inputByteArray.length);
+
+        int length = lengthCaptor.getValue();
+        assertEquals(inputByteArray.length, length);
+        
+        int flags = flagsCaptor.getValue();
+        assertEquals(0, flags);
+        
+        byte[] outputByteArray = outputByteArrayCaptor.getValue();
+        assertTrue(inputByteArray == outputByteArray);
+
+        verify(mockBuffer).rewind();
+        verify(mockBuffer).remaining();
+        verify(mockBuffer).get(isA(byte[].class));
+        
+        PowerMockito.verifyStatic();
+        GLFS.glfs_write(isA(Long.class), isA(byte[].class), isA(Integer.class), isA(Integer.class));
     }
 
 }

@@ -44,8 +44,17 @@ public class Example {
         FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(posixFilePermissions);
 
         Path glusterPath = fileSystem.getPath("/baz");
-//        Files.createFile(glusterPath, attrs);
-        Files.write(glusterPath, "Hello, world!".getBytes());
+        try {
+            Files.createFile(glusterPath, attrs);
+        } catch (IOException e) {
+            System.out.println("File exists");
+        }
+        String hello = "Hello, ";
+        Files.write(glusterPath, hello.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+        String world = "world!";
+        Files.write(glusterPath, world.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+//        byte[] readBytes = Files.readAllBytes(glusterPath);
+//        System.out.println(hello + world + " == " + new String(readBytes));
         fileSystem.close();
     }
 }

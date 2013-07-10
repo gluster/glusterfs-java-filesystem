@@ -13,6 +13,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -57,16 +58,25 @@ public class GlusterFileChannel extends FileChannel {
         int flags = parseOptions(options);
         int mode = parseAttrs(attrs);
 
+        System.out.println(options);
+
         String pathString = path.toUri().getPath();
-        if (options.contains(StandardOpenOption.CREATE) || options.contains(StandardOpenOption.CREATE_NEW)) {
+        boolean createNew = options.contains(StandardOpenOption.CREATE_NEW);
+        if (options.contains(StandardOpenOption.CREATE) || createNew) {
             fileptr = GLFS.glfs_creat(fileSystem.getVolptr(), pathString, flags, mode);
+            System.out.println("CREATE: "+fileptr);
         }
         
-        if (0 == fileptr) {
+        if (createNew && 0 == fileptr) {
+            throw new FileAlreadyExistsException(path.toString());
+        }
+        
+        if (0 >= fileptr) {
             fileptr = GLFS.glfs_open(fileSystem.getVolptr(), pathString, flags);
+            System.out.println("OPEN: "+fileptr);
         }
 
-        if (0 == fileptr) {
+        if (0 >= fileptr) {
             throw new IOException("Unable to create or open file '" + pathString + "' on volume '" + fileSystem.toString() + "'");
         }
     }
@@ -132,12 +142,15 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public int write(ByteBuffer byteBuffer) throws IOException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        byteBuffer.rewind();
+        byte[] buf = new byte[byteBuffer.remaining()];
+        byteBuffer.get(buf);
+        return GLFS.glfs_write(fileptr, buf, buf.length, 0);
     }
 
     @Override
-    public long write(ByteBuffer[] byteBuffers, int i, int i2) throws IOException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    public long write(ByteBuffer[] byteBuffers, int offset, int length) throws IOException {
+        return 0;
     }
 
     @Override
