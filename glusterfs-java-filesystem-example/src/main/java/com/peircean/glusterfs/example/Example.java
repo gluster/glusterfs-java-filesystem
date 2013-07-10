@@ -27,11 +27,6 @@ public class Example {
         System.out.println(getProvider("gluster").toString());
 
         String testUri = "gluster://127.0.2.1:foo/baz";
-        Path path = Paths.get(testUri);
-        // TODO: Paths does not return a GlusterPath, but rather a UnixPath, when given a gluster URI.  Why?
-        System.out.println(path.getFileSystem().toString());
-
-        System.out.println(path.toString());
 
         FileSystem fileSystem = FileSystems.newFileSystem(new URI(testUri), null);
         FileStore store = fileSystem.getFileStores().iterator().next();
@@ -43,7 +38,11 @@ public class Example {
         Set<PosixFilePermission> posixFilePermissions = PosixFilePermissions.fromString("rw-rw-rw-");
         FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(posixFilePermissions);
 
-        Path glusterPath = fileSystem.getPath("/baz");
+        Path glusterPath = Paths.get(new URI(testUri)); //null
+        System.out.println(glusterPath.getClass()); //NPE
+        System.out.println(glusterPath);
+        System.out.println(glusterPath.getFileSystem().toString()); //NPE
+
         try {
             Files.createFile(glusterPath, attrs);
         } catch (IOException e) {
@@ -53,6 +52,7 @@ public class Example {
         Files.write(glusterPath, hello.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
         String world = "world!";
         Files.write(glusterPath, world.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+        System.out.println("SIZE: " + Files.size(glusterPath));
         byte[] readBytes = Files.readAllBytes(glusterPath);
         System.out.println(hello + world + " == " + new String(readBytes));
         fileSystem.close();

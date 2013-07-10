@@ -2,11 +2,13 @@ package com.peircean.glusterfs;
 
 import junit.framework.TestCase;
 import org.fusesource.glfsjni.internal.GLFS;
+import org.fusesource.glfsjni.internal.structs.stat;
 import org.fusesource.glfsjni.internal.structs.statvfs;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -15,8 +17,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileSystem;
-import java.nio.file.OpenOption;
+import java.nio.file.*;
+import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,7 +33,7 @@ import static org.powermock.api.mockito.PowerMockito.*;
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({GLFS.class, GlusterFileSystemProvider.class, GlusterFileChannel.class})
+@PrepareForTest({GLFS.class, GlusterFileSystemProvider.class, GlusterFileChannel.class, GlusterFileAttributes.class})
 public class GlusterFileSystemProviderTest extends TestCase {
 
     public static final String SERVER = "hostname";
@@ -150,6 +152,11 @@ public class GlusterFileSystemProviderTest extends TestCase {
         GLFS.glfs_init(123l);
     }
 
+    @Test(expected = FileSystemNotFoundException.class)
+    public void testGetFileSystem_whenNotFound() throws URISyntaxException {
+        provider.getFileSystem(new URI("gluster://foo:bar/baz"));
+    }
+
     @Test
     public void testGetFileSystem() throws URISyntaxException {
         provider.getCache().put("foo:bar", mockFileSystem);
@@ -191,6 +198,122 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verify(mockPath).toUri();
         verifyNew(GlusterFileChannel.class).withNoArguments();
         assertEquals(mockChannel, channel);
+    }
+
+    @Test(expected = FileSystemNotFoundException.class)
+    public void testGetPath_whenCantCreateFilesystem() throws URISyntaxException, IOException {
+        URI uri = new URI("gluster://foo:bar/baz");
+        doThrow(FileSystemNotFoundException.class).when(provider).getFileSystem(uri);
+        doThrow(IOException.class).when(provider).newFileSystem(uri, null);
+        provider.getPath(uri);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetPath_whenSchemeIsUnknown() throws URISyntaxException {
+        URI uri = new URI("fluster://foo:bar/baz");
+        provider.getPath(uri);
+    }
+    
+    @Test
+    public void testGetPath_whenCached() throws URISyntaxException, IOException {
+        URI uri = new URI("gluster://foo:bar/baz");
+        provider.getCache().put(uri.getAuthority(), mockFileSystem);
+        doReturn(mockPath).when(mockFileSystem).getPath(uri.getPath());
+        Path path = provider.getPath(uri);
+        assertEquals(mockPath, path);
+        verify(provider, times(0)).newFileSystem(uri, null);
+        verify(mockFileSystem).getPath(uri.getPath());
+    }
+    
+    @Test
+    public void testGetPath_whenNotCached() throws URISyntaxException, IOException {
+        URI uri = new URI("gluster://foo:bar/baz");
+        doThrow(FileSystemNotFoundException.class).when(provider).getFileSystem(uri);
+        doReturn(mockFileSystem).when(provider).newFileSystem(uri, null);
+        doReturn(mockPath).when(mockFileSystem).getPath(uri.getPath());
+        Path path = provider.getPath(uri);
+        assertEquals(mockPath, path);
+        verify(provider).newFileSystem(uri, null);
+        verify(mockFileSystem).getPath(uri.getPath());
+    }
+    
+    @Test(expected = UnsupportedOperationException.class)
+    public void testReadAttributes_whenDosAttributes() throws IOException {
+        provider.readAttributes(mockPath, DosFileAttributes.class);
+    }
+
+    @Test
+    public void testReadAttributes_followLinks() throws Exception {
+        long volptr = 1234l;
+        String path = "/foo/bar";
+        URI uri = new URI("gluster://foo:bar" + path);
+
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+        doReturn(uri).when(mockPath).toUri();
+        
+        stat stat = new stat();
+        whenNew(stat.class).withNoArguments().thenReturn(stat);
+
+        mockStatic(GlusterFileAttributes.class);
+        GlusterFileAttributes fakeAttributes = new GlusterFileAttributes(123, 234, 345, 12345l, 222111l, 121212l, 212121);
+        when(GlusterFileAttributes.fromStat(stat)).thenReturn(fakeAttributes);
+
+        mockStatic(GLFS.class);
+        when(GLFS.glfs_stat(volptr, path, stat)).thenReturn(0);
+
+        GlusterFileAttributes attributes = provider.readAttributes(mockPath, GlusterFileAttributes.class);
+
+        assertEquals(fakeAttributes, attributes);
+
+        verify(mockPath).getFileSystem();
+        verify(mockFileSystem).getVolptr();
+        verify(mockPath).toUri();
+
+        verifyNew(stat.class).withNoArguments();
+
+        verifyStatic();
+        GLFS.glfs_stat(volptr, path, stat);
+
+        verifyStatic();
+        GlusterFileAttributes.fromStat(stat);
+    }
+
+    @Test
+    public void testReadAttributes_dontFollowLinks() throws Exception {
+        long volptr = 1234l;
+        String path = "/foo/bar";
+        URI uri = new URI("gluster://foo:bar" + path);
+        
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+        doReturn(uri).when(mockPath).toUri();
+
+        stat stat = new stat();
+        whenNew(stat.class).withNoArguments().thenReturn(stat);
+
+        mockStatic(GlusterFileAttributes.class);
+        GlusterFileAttributes fakeAttributes = new GlusterFileAttributes(123, 234, 345, 12345l, 222111l, 121212l, 212121);
+        when(GlusterFileAttributes.fromStat(stat)).thenReturn(fakeAttributes);
+
+        mockStatic(GLFS.class);
+        when(GLFS.glfs_lstat(volptr, path, stat)).thenReturn(0);
+
+        GlusterFileAttributes attributes = provider.readAttributes(mockPath, GlusterFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+
+        assertEquals(fakeAttributes, attributes);
+
+        verify(mockPath).getFileSystem();
+        verify(mockFileSystem).getVolptr();
+        verify(mockPath).toUri();
+
+        verifyNew(stat.class).withNoArguments();
+
+        verifyStatic();
+        GLFS.glfs_lstat(volptr, path, stat);
+
+        verifyStatic();
+        GlusterFileAttributes.fromStat(stat);
     }
 
     @Test

@@ -1,11 +1,98 @@
 package com.peircean.glusterfs;
 
-/**
- * Created with IntelliJ IDEA.
- * User: louis
- * Date: 7/9/13
- * Time: 11:22 PM
- * To change this template use File | Settings | File Templates.
- */
-public class GlusterFileAttributesTest {
+import junit.framework.TestCase;
+import org.fusesource.glfsjni.internal.structs.stat;
+import org.junit.Test;
+
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
+
+public class GlusterFileAttributesTest extends TestCase {
+
+    public static final int MODE = 0100777;
+    public static final int UID = 1000;
+    public static final int GID = 1001;
+    public static final long SIZE = 1234l;
+    public static final long ATIME = 54321l;
+    public static final long CTIME = 54322l;
+    public static final long MTIME = 54323l;
+    private GlusterFileAttributes attrib = new GlusterFileAttributes(MODE, UID, GID, SIZE, ATIME, CTIME, MTIME);
+
+    @Test
+    public void testOwner() {
+        assertEquals(String.valueOf(UID), attrib.owner().getName());
+    }
+
+    @Test
+    public void testGroup() {
+        assertEquals(String.valueOf(GID), attrib.group().getName());
+    }
+
+    @Test
+    public void testModified() {
+        assertEquals(FileTime.fromMillis(MTIME), attrib.lastModifiedTime());
+    }
+
+    @Test
+    public void testCreated() {
+        assertEquals(FileTime.fromMillis(CTIME), attrib.creationTime());
+    }
+
+    @Test
+    public void testAccessed() {
+        assertEquals(FileTime.fromMillis(ATIME), attrib.lastAccessTime());
+    }
+
+    @Test
+    public void testPermissions() {
+        Set<PosixFilePermission> expected = PosixFilePermissions.fromString("rwxrwxrwx");
+        Set<PosixFilePermission> permissions = attrib.permissions();
+        assertEquals(expected, permissions);
+    }
+
+    @Test
+    public void testIsRegular() {
+        assertTrue(attrib.isRegularFile());
+    }
+
+    @Test
+    public void testIsSymbolic() {
+        attrib = new GlusterFileAttributes(0120777, UID, GID, SIZE, ATIME, CTIME, MTIME);
+        assertTrue(attrib.isSymbolicLink());
+    }
+
+    @Test
+    public void testIsDirectory() {
+        attrib = new GlusterFileAttributes(0040777, UID, GID, SIZE, ATIME, CTIME, MTIME);
+        assertTrue(attrib.isDirectory());
+    }
+
+    @Test
+    public void testIsOther() {
+        attrib = new GlusterFileAttributes(0000777, UID, GID, SIZE, ATIME, CTIME, MTIME);
+        assertTrue(attrib.isOther());
+    }
+
+    @Test
+    public void testSize() {
+        assertEquals(SIZE, attrib.size());
+    }
+    
+    @Test 
+    public void testFromStat() {
+        stat stat = new stat();
+        stat.st_size = SIZE;
+        stat.st_gid = GID;
+        stat.st_uid = UID;
+        stat.st_mode = MODE;
+
+        GlusterFileAttributes attr = GlusterFileAttributes.fromStat(stat);
+        
+        assertEquals(stat.st_size, attr.getSize());
+        assertEquals(stat.st_uid, attr.getUid());
+        assertEquals(stat.st_gid, attr.getGid());
+        assertEquals(stat.st_mode, attr.getMode());
+    }
 }

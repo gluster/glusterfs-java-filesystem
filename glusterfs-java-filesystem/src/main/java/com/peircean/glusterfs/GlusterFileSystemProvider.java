@@ -3,6 +3,7 @@ package com.peircean.glusterfs;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.fusesource.glfsjni.internal.GLFS;
+import org.fusesource.glfsjni.internal.structs.stat;
 import org.fusesource.glfsjni.internal.structs.statvfs;
 
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
@@ -48,7 +50,7 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
         glfsInit(authorityString, volptr);
 
-        GLFS.glfs_set_logging(volptr, "/tmp/gluster-java.log", 9);
+//        GLFS.glfs_set_logging(volptr, "/tmp/gluster-java.log", 9);
 
         GlusterFileSystem fileSystem = new GlusterFileSystem(this, authority[0], volname, volptr);
         cache.put(authorityString, fileSystem);
@@ -92,12 +94,28 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileSystem getFileSystem(URI uri) {
+        if (!cache.containsKey(uri.getAuthority())) {
+            throw new FileSystemNotFoundException("No cached filesystem for: " + uri.getAuthority());
+        }
         return cache.get(uri.getAuthority());
     }
 
     @Override
     public Path getPath(URI uri) {
-        return null;
+        if (!uri.getScheme().equals(getScheme())) {
+            throw new IllegalArgumentException("No support for scheme: " + uri.getScheme());
+        }
+        try {
+            FileSystem fileSystem = getFileSystem(uri);
+            return fileSystem.getPath(uri.getPath());
+        } catch (FileSystemNotFoundException e) {
+        }
+
+        try {
+            return newFileSystem(uri, null).getPath(uri.getPath());
+        } catch (IOException e) {
+            throw new FileSystemNotFoundException("Unable to open a connection to " + uri.getAuthority());
+        }
     }
 
     @Override
@@ -167,8 +185,26 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     }
 
     @Override
-    public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> aClass, LinkOption... linkOptions) throws IOException {
-        return null;
+    public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... linkOptions) throws IOException {
+        if (type.equals(DosFileAttributes.class)) {
+            throw new UnsupportedOperationException("DOS attributes are not supported, only PosixFileAttributes & its superinterfaces");
+        }
+        stat stat = new stat();
+
+        boolean followSymlinks = true;
+        for (LinkOption lo : linkOptions) {
+            if (lo.equals(LinkOption.NOFOLLOW_LINKS)) {
+                followSymlinks = false;
+                break;
+            }
+        }
+
+        if (followSymlinks) {
+            GLFS.glfs_stat(((GlusterFileSystem) path.getFileSystem()).getVolptr(), path.toUri().getPath(), stat);
+        } else {
+            GLFS.glfs_lstat(((GlusterFileSystem) path.getFileSystem()).getVolptr(), path.toUri().getPath(), stat);
+        }
+        return (A) GlusterFileAttributes.fromStat(stat);
     }
 
     @Override
