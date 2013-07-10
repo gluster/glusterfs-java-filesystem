@@ -3,6 +3,7 @@ package com.peircean.glusterfs;
 import junit.framework.TestCase;
 import org.fusesource.glfsjni.internal.GLFS;
 import org.fusesource.glfsjni.internal.GlusterOpenOption;
+import org.fusesource.glfsjni.internal.structs.stat;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -180,19 +181,58 @@ public class GlusterFileChannelTest extends TestCase {
 
         int length = lengthCaptor.getValue();
         assertEquals(inputByteArray.length, length);
-        
+
         int flags = flagsCaptor.getValue();
         assertEquals(0, flags);
-        
+
         byte[] outputByteArray = outputByteArrayCaptor.getValue();
         assertTrue(inputByteArray == outputByteArray);
 
         verify(mockBuffer).rewind();
         verify(mockBuffer).remaining();
         verify(mockBuffer).get(isA(byte[].class));
-        
+
         PowerMockito.verifyStatic();
         GLFS.glfs_write(isA(Long.class), isA(byte[].class), isA(Integer.class), isA(Integer.class));
+    }
+
+    @Test
+    public void testSize() throws Exception {
+        long fileptr = 1234l;
+        channel.setFileptr(fileptr);
+
+        long actualSize = 321l;
+        stat stat = new stat();
+        stat.st_size = actualSize;
+
+        PowerMockito.whenNew(stat.class).withNoArguments().thenReturn(stat);
+
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_fstat(fileptr, stat)).thenReturn(0);
+
+        long size = channel.size();
+
+        assertEquals(actualSize, size);
+
+        PowerMockito.verifyStatic();
+        GLFS.glfs_fstat(fileptr, stat);
+    }
+
+    @Test(expected = IOException.class)
+    public void testSize_whenFailing() throws Exception {
+        long fileptr = 1234l;
+        channel.setFileptr(fileptr);
+
+        long actualSize = 321l;
+        stat stat = new stat();
+        stat.st_size = actualSize;
+
+        PowerMockito.whenNew(stat.class).withNoArguments().thenReturn(stat);
+
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_fstat(fileptr, stat)).thenReturn(-1);
+
+        long size = channel.size();
     }
 
 }

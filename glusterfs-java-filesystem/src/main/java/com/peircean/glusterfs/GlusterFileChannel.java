@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.fusesource.glfsjni.internal.GLFS;
 import org.fusesource.glfsjni.internal.GlusterOpenOption;
+import org.fusesource.glfsjni.internal.structs.stat;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -165,7 +166,12 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public long size() throws IOException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        stat stat = new stat();
+        int retval = GLFS.glfs_fstat(fileptr, stat);
+        if (0 != retval) {
+            throw new IOException("fstat failed");
+        }
+        return stat.st_size;
     }
 
     @Override

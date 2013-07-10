@@ -53,8 +53,8 @@ public class Example {
         Files.write(glusterPath, hello.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
         String world = "world!";
         Files.write(glusterPath, world.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.APPEND);
-//        byte[] readBytes = Files.readAllBytes(glusterPath);
-//        System.out.println(hello + world + " == " + new String(readBytes));
+        byte[] readBytes = Files.readAllBytes(glusterPath);
+        System.out.println(hello + world + " == " + new String(readBytes));
         fileSystem.close();
     }
 }
