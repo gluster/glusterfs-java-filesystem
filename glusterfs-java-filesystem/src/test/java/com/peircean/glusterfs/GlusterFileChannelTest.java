@@ -6,8 +6,6 @@ import org.fusesource.glfsjni.internal.GlusterOpenOption;
 import org.fusesource.glfsjni.internal.structs.stat;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.powermock.api.mockito.PowerMockito;
@@ -43,18 +41,6 @@ public class GlusterFileChannelTest extends TestCase {
     private GlusterFileSystem mockFileSystem;
     @Mock
     private ByteBuffer mockBuffer;
-    @Captor
-    private ArgumentCaptor<Long> fileptrCaptor;
-    @Captor
-    private ArgumentCaptor<Integer> flagsCaptor;
-    @Captor
-    private ArgumentCaptor<Integer> lengthCaptor;
-    @Captor
-    private ArgumentCaptor<Long> longLengthCaptor;
-    @Captor
-    private ArgumentCaptor<byte[]> inputByteArrayCaptor;
-    @Captor
-    private ArgumentCaptor<byte[]> outputByteArrayCaptor;
     @Spy
     private GlusterFileChannel channel = new GlusterFileChannel();
 
