@@ -15,9 +15,9 @@ public class GlusterFileAttributesTest extends TestCase {
     public static final int UID = 1000;
     public static final int GID = 1001;
     public static final long SIZE = 1234l;
-    public static final long ATIME = 54321l;
-    public static final long CTIME = 54322l;
-    public static final long MTIME = 54323l;
+    public static final long ATIME = 1373464796l;
+    public static final long CTIME = 1373464797l;
+    public static final long MTIME = 1373464798l;
     public static final long INODE = 4452352l;
     private GlusterFileAttributes attrib = new GlusterFileAttributes(MODE, UID, GID, SIZE, ATIME, CTIME, MTIME, INODE);
 
@@ -33,17 +33,17 @@ public class GlusterFileAttributesTest extends TestCase {
 
     @Test
     public void testModified() {
-        assertEquals(FileTime.fromMillis(MTIME), attrib.lastModifiedTime());
+        assertEquals(FileTime.fromMillis(MTIME * 1000), attrib.lastModifiedTime());
     }
 
     @Test
     public void testCreated() {
-        assertEquals(FileTime.fromMillis(CTIME), attrib.creationTime());
+        assertEquals(FileTime.fromMillis(CTIME * 1000), attrib.creationTime());
     }
 
     @Test
     public void testAccessed() {
-        assertEquals(FileTime.fromMillis(ATIME), attrib.lastAccessTime());
+        assertEquals(FileTime.fromMillis(ATIME * 1000), attrib.lastAccessTime());
     }
 
     @Test
@@ -80,13 +80,13 @@ public class GlusterFileAttributesTest extends TestCase {
     public void testSize() {
         assertEquals(SIZE, attrib.size());
     }
-    
+
     @Test
     public void testFileKey() {
         assertEquals(INODE, attrib.fileKey());
     }
-    
-    @Test 
+
+    @Test
     public void testFromStat() {
         stat stat = new stat();
         stat.st_size = SIZE;
@@ -94,13 +94,20 @@ public class GlusterFileAttributesTest extends TestCase {
         stat.st_uid = UID;
         stat.st_mode = MODE;
         stat.st_ino = INODE;
+        stat.atime = ATIME;
+        stat.mtime = MTIME;
+        stat.ctime = CTIME;
 
         GlusterFileAttributes attr = GlusterFileAttributes.fromStat(stat);
-        
+
         assertEquals(stat.st_size, attr.getSize());
         assertEquals(stat.st_uid, attr.getUid());
         assertEquals(stat.st_gid, attr.getGid());
         assertEquals(stat.st_mode, attr.getMode());
-        assertEquals(stat.st_ino, attr.getInode());        
+        assertEquals(stat.st_ino, attr.getInode());
+        assertEquals(stat.atime, attr.getAtime());
+        assertEquals(stat.mtime, attr.getMtime());
+        assertEquals(stat.ctime, attr.getCtime());
+
     }
 }

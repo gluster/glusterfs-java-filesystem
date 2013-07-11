@@ -29,7 +29,8 @@ public class GlusterFileAttributes implements PosixFileAttributes {
     private final long size, atime, ctime, mtime, inode;
 
     public static GlusterFileAttributes fromStat(stat stat) {
-        return new GlusterFileAttributes(stat.st_mode, stat.st_uid, stat.st_gid, stat.st_size, 0, 0, 0, stat.st_ino);
+        return new GlusterFileAttributes(stat.st_mode, stat.st_uid, stat.st_gid, stat.st_size,
+                stat.atime, stat.ctime, stat.mtime, stat.st_ino);
     }
 
     @Override
@@ -65,17 +66,17 @@ public class GlusterFileAttributes implements PosixFileAttributes {
 
     @Override
     public FileTime lastModifiedTime() {
-        return FileTime.fromMillis(mtime);
+        return FileTime.fromMillis(mtime * 1000);
     }
 
     @Override
     public FileTime lastAccessTime() {
-        return FileTime.fromMillis(atime);
+        return FileTime.fromMillis(atime * 1000);
     }
 
     @Override
     public FileTime creationTime() {
-        return FileTime.fromMillis(ctime);
+        return FileTime.fromMillis(ctime * 1000);
     }
 
     @Override
