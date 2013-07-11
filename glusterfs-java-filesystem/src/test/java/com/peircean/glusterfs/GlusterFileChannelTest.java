@@ -252,6 +252,36 @@ public class GlusterFileChannelTest extends TestCase {
         PowerMockito.verifyStatic();
         GLFS.glfs_lseek(fileptr, position, 0);
     }
+    
+    @Test(expected = ClosedChannelException.class)
+    public void testForce_whenClosed() throws IOException {
+        channel.setClosed(true);
+        channel.force(true);
+    }
+    
+    @Test(expected = IOException.class)
+    public void testForce_whenFailing() throws IOException {
+        long fileptr = 1234l;
+        channel.setFileptr(fileptr);
+        
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_fsync(fileptr)).thenReturn(-1);
+        
+        channel.force(true);
+    }
+    
+    @Test
+    public void testForce() throws IOException {
+        long fileptr = 1234l;
+        channel.setFileptr(fileptr);
+
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_fsync(fileptr)).thenReturn(0);
+
+        channel.force(true);
+        PowerMockito.verifyStatic();
+        GLFS.glfs_fsync(fileptr);
+    }
 
     @Test(expected = IOException.class)
     public void testImplCloseChannel_whenFailing() throws IOException {

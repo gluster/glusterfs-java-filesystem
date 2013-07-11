@@ -113,9 +113,7 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public int read(ByteBuffer byteBuffer) throws IOException {
-        if (closed) {
-            throw new ClosedChannelException();
-        }
+        guardClosed();
         byte[] bytes = byteBuffer.array();
         long read = GLFS.glfs_read(fileptr, bytes, bytes.length, 0);
         return (int) read;
@@ -128,9 +126,7 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public int write(ByteBuffer byteBuffer) throws IOException {
-        if (closed) {
-            throw new ClosedChannelException();
-        }
+        guardClosed();
         byte[] buf = byteBuffer.array();
         int written = GLFS.glfs_write(fileptr, buf, buf.length, 0);
         byteBuffer.position(written);
@@ -144,17 +140,13 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public long position() throws IOException {
-        if (closed) {
-            throw new ClosedChannelException();
-        }
+        guardClosed();
         return position;
     }
 
     @Override
     public FileChannel position(long offset) throws IOException {
-        if (closed) {
-            throw new ClosedChannelException();
-        }
+        guardClosed();
         if (offset < 0) {
             throw new IllegalArgumentException("offset can't be negative");
         }
@@ -162,6 +154,12 @@ public class GlusterFileChannel extends FileChannel {
         int seek = GLFS.glfs_lseek(fileptr, offset, whence);
         position = offset;
         return this;
+    }
+
+    private void guardClosed() throws ClosedChannelException {
+        if (closed) {
+            throw new ClosedChannelException();
+        }
     }
 
     @Override
@@ -181,7 +179,11 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public void force(boolean b) throws IOException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        guardClosed();
+        int fsync = GLFS.glfs_fsync(fileptr);
+        if (0 != fsync) {
+            throw new IOException("Unable to fsync");
+        }
     }
 
     @Override

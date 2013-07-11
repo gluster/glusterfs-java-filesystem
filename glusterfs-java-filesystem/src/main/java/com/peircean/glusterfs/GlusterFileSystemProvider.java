@@ -183,8 +183,9 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... linkOptions) throws IOException {
-        if (!PosixFileAttributes.class.isAssignableFrom(type)) {
-            throw new UnsupportedOperationException("DOS attributes are not supported, only PosixFileAttributes & its superinterfaces");
+//        if (!type.isAssignableFrom(GlusterFileAttributes.class)) { // Why doesn't this work when type is GlusterFileAttributes.class?!
+        if (type.equals(DosFileAttributes.class)) {
+            throw new UnsupportedOperationException(type+" attribute type is not supported, only PosixFileAttributes & its superinterfaces");
         }
         stat stat = new stat();
 

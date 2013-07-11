@@ -19,6 +19,7 @@ import java.net.URISyntaxException;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.util.HashSet;
