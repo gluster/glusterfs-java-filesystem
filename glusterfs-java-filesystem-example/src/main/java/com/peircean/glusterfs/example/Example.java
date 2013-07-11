@@ -47,7 +47,7 @@ public class Example {
             Files.createFile(glusterPath, attrs);
             System.out.println("File created");
         } catch (IOException e) {
-            System.out.println("File exists");
+            System.out.println("File exists, created at " + Files.getLastModifiedTime(glusterPath));
         }
         String hello = "Hello, ";
         Files.write(glusterPath, hello.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -56,6 +56,7 @@ public class Example {
         System.out.println("SIZE: " + Files.size(glusterPath));
         byte[] readBytes = Files.readAllBytes(glusterPath);
         System.out.println(hello + world + " == " + new String(readBytes));
+        System.out.println("Last modified: " + Files.getLastModifiedTime(glusterPath) + " (should be now)");
         fileSystem.close();
     }
 }
