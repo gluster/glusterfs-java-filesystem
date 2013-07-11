@@ -10,10 +10,7 @@ import org.fusesource.glfsjni.internal.structs.stat;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
+import java.nio.channels.*;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -58,6 +55,8 @@ public class GlusterFileChannel extends FileChannel {
     private Set<? extends OpenOption> options;
     private FileAttribute<?> attrs[] = null;
     private long fileptr;
+    private long position;
+    private boolean closed = false;
 
     void init(GlusterFileSystem fileSystem, Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
         this.fileSystem = fileSystem;
@@ -114,6 +113,9 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public int read(ByteBuffer byteBuffer) throws IOException {
+        if (closed) {
+            throw new ClosedChannelException();
+        }
         byte[] bytes = byteBuffer.array();
         long read = GLFS.glfs_read(fileptr, bytes, bytes.length, 0);
         return (int) read;
@@ -126,6 +128,9 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public int write(ByteBuffer byteBuffer) throws IOException {
+        if (closed) {
+            throw new ClosedChannelException();
+        }
         byte[] buf = byteBuffer.array();
         int written = GLFS.glfs_write(fileptr, buf, buf.length, 0);
         byteBuffer.position(written);
@@ -139,12 +144,24 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public long position() throws IOException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        if (closed) {
+            throw new ClosedChannelException();
+        }
+        return position;
     }
 
     @Override
-    public FileChannel position(long l) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public FileChannel position(long offset) throws IOException {
+        if (closed) {
+            throw new ClosedChannelException();
+        }
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset can't be negative");
+        }
+        int whence = 0; //SEEK_SET
+        int seek = GLFS.glfs_lseek(fileptr, offset, whence);
+        position = offset;
+        return this;
     }
 
     @Override
@@ -204,6 +221,13 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     protected void implCloseChannel() throws IOException {
-        GLFS.glfs_close(fileptr);
+        if (!closed) {
+            int close = GLFS.glfs_close(fileptr);
+            if (0 != close) {
+                throw new IOException("Close returned nonzero");
+            }
+            closed = true;
+        }
     }
+
 }

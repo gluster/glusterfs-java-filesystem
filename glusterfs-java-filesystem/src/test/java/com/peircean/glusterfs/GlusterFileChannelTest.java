@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.FileChannel;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
@@ -161,6 +163,12 @@ public class GlusterFileChannelTest extends TestCase {
         assertEquals(0777, mode);
     }
 
+    @Test(expected = ClosedChannelException.class)
+    public void testRead1Arg_whenClosed() throws IOException {
+        channel.setClosed(true);
+        channel.read(mockBuffer);
+    }
+
     @Test
     public void testRead1Arg() throws IOException {
         long fileptr = 1234l;
@@ -168,20 +176,26 @@ public class GlusterFileChannelTest extends TestCase {
 
         byte[] bytes = new byte[]{'a', 'b', 'c'};
         long bufferLength = bytes.length;
-        
+
         PowerMockito.mockStatic(GLFS.class);
         when(GLFS.glfs_read(fileptr, bytes, bufferLength, 0)).thenReturn(bufferLength);
 
         doReturn(bytes).when(mockBuffer).array();
 
         int read = channel.read(mockBuffer);
-        
+
         assertEquals(bufferLength, read);
 
         verify(mockBuffer).array();
 
         PowerMockito.verifyStatic();
         GLFS.glfs_read(fileptr, bytes, bufferLength, 0);
+    }
+
+    @Test(expected = ClosedChannelException.class)
+    public void testWrite1Arg_whenClosed() throws IOException {
+        channel.setClosed(true);
+        channel.write(mockBuffer);
     }
 
     @Test
@@ -191,7 +205,7 @@ public class GlusterFileChannelTest extends TestCase {
 
         byte[] bytes = new byte[]{'a', 'b'};
         int bufferLength = bytes.length;
-        
+
         PowerMockito.mockStatic(GLFS.class);
         when(GLFS.glfs_write(fileptr, bytes, bufferLength, 0)).thenReturn(bufferLength);
 
@@ -201,24 +215,98 @@ public class GlusterFileChannelTest extends TestCase {
         int written = channel.write(mockBuffer);
 
         assertEquals(bufferLength, written);
-        
+
         verify(mockBuffer).array();
         verify(mockBuffer).position(bufferLength);
 
         PowerMockito.verifyStatic();
         GLFS.glfs_write(fileptr, bytes, bufferLength, 0);
     }
-    
+
+    @Test(expected = ClosedChannelException.class)
+    public void testGetPosition_whenClosed() throws IOException {
+        channel.setClosed(true);
+        channel.position();
+    }
+
     @Test
-    public void testImplCloseChannel() throws IOException {
+    public void testGetPosition() throws IOException {
+        long position = 12345l;
+        channel.setPosition(position);
+        long returnedPosition = channel.position();
+        assertEquals(position, returnedPosition);
+    }
+
+    @Test(expected = ClosedChannelException.class)
+    public void testSetPosition_whenClosed() throws IOException {
+        channel.setClosed(true);
+        long position = 12l;
+        channel.position(position);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetPosition_whenNegative() throws IOException {
+        long position = -1l;
+        channel.position(position);
+    }
+
+    @Test
+    public void testSetPosition() throws IOException {
+        long fileptr = 123l;
+        channel.setFileptr(fileptr);
+        long position = 12345l;
+
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_lseek(fileptr, position, 0)).thenReturn(0);
+        FileChannel returnedChannel = channel.position(position);
+
+        assertEquals(channel, returnedChannel);
+        assertEquals(position, channel.getPosition());
+
+        PowerMockito.verifyStatic();
+        GLFS.glfs_lseek(fileptr, position, 0);
+    }
+
+    @Test(expected = IOException.class)
+    public void testImplCloseChannel_whenFailing() throws IOException {
         long fileptr = 1234l;
         channel.setFileptr(fileptr);
-        
+
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_close(fileptr)).thenReturn(1);
+
+        channel.implCloseChannel();
+    }
+
+    @Test
+    public void testImplCloseChannel_whenAlreadyClosed() throws IOException {
+        channel.setClosed(true);
+        long fileptr = 1234l;
+        channel.setFileptr(fileptr);
+
         PowerMockito.mockStatic(GLFS.class);
         when(GLFS.glfs_close(fileptr)).thenReturn(0);
 
         channel.implCloseChannel();
-        
+
+        assertTrue(channel.isClosed());
+
+        PowerMockito.verifyStatic(never());
+        GLFS.glfs_close(fileptr);
+    }
+
+    @Test
+    public void testImplCloseChannel() throws IOException {
+        long fileptr = 1234l;
+        channel.setFileptr(fileptr);
+
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_close(fileptr)).thenReturn(0);
+
+        channel.implCloseChannel();
+
+        assertTrue(channel.isClosed());
+
         PowerMockito.verifyStatic();
         GLFS.glfs_close(fileptr);
     }
