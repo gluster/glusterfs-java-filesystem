@@ -38,10 +38,10 @@ public class Example {
         Set<PosixFilePermission> posixFilePermissions = PosixFilePermissions.fromString("rw-rw-rw-");
         FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(posixFilePermissions);
 
-        Path glusterPath = Paths.get(new URI(testUri)); //null
-        System.out.println(glusterPath.getClass()); //NPE
+        Path glusterPath = Paths.get(new URI(testUri));
+        System.out.println(glusterPath.getClass());
         System.out.println(glusterPath);
-        System.out.println(glusterPath.getFileSystem().toString()); //NPE
+        System.out.println(glusterPath.getFileSystem().toString());
 
         try {
             Files.createFile(glusterPath, attrs);
