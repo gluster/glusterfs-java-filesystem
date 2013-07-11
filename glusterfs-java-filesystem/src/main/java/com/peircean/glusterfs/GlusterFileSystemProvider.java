@@ -11,10 +11,7 @@ import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.DosFileAttributes;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
@@ -186,7 +183,7 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... linkOptions) throws IOException {
-        if (type.equals(DosFileAttributes.class)) {
+        if (!PosixFileAttributes.class.isAssignableFrom(type)) {
             throw new UnsupportedOperationException("DOS attributes are not supported, only PosixFileAttributes & its superinterfaces");
         }
         stat stat = new stat();
