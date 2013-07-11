@@ -189,39 +189,38 @@ public class GlusterFileChannelTest extends TestCase {
         long fileptr = 1234l;
         channel.setFileptr(fileptr);
 
+        byte[] bytes = new byte[]{'a', 'b'};
+        int bufferLength = bytes.length;
+        
         PowerMockito.mockStatic(GLFS.class);
-        int bufferLength = 3;
-        when(GLFS.glfs_write(fileptrCaptor.capture(), outputByteArrayCaptor.capture(), lengthCaptor.capture(),
-                flagsCaptor.capture())).thenReturn(bufferLength);
+        when(GLFS.glfs_write(fileptr, bytes, bufferLength, 0)).thenReturn(bufferLength);
 
-        doReturn(null).when(mockBuffer).rewind();
-        doReturn(bufferLength).when(mockBuffer).remaining();
-        doReturn(null).when(mockBuffer).get(inputByteArrayCaptor.capture());
+        doReturn(bytes).when(mockBuffer).array();
+        doReturn(null).when(mockBuffer).position(bufferLength);
 
         int written = channel.write(mockBuffer);
 
-        byte[] inputByteArray = inputByteArrayCaptor.getValue();
-        assertEquals(inputByteArray.length, written);
-
-        assertEquals(bufferLength, inputByteArray.length);
-
-        int length = lengthCaptor.getValue();
-        assertEquals(inputByteArray.length, length);
-
-        int flags = flagsCaptor.getValue();
-        assertEquals(0, flags);
-
-        byte[] outputByteArray = outputByteArrayCaptor.getValue();
-        assertTrue(inputByteArray == outputByteArray);
-
-        assertEquals(fileptr, (long)fileptrCaptor.getValue());
+        assertEquals(bufferLength, written);
         
-        verify(mockBuffer).rewind();
-        verify(mockBuffer).remaining();
-        verify(mockBuffer).get(isA(byte[].class));
+        verify(mockBuffer).array();
+        verify(mockBuffer).position(bufferLength);
 
         PowerMockito.verifyStatic();
-        GLFS.glfs_write(isA(Long.class), isA(byte[].class), isA(Integer.class), isA(Integer.class));
+        GLFS.glfs_write(fileptr, bytes, bufferLength, 0);
+    }
+    
+    @Test
+    public void testImplCloseChannel() throws IOException {
+        long fileptr = 1234l;
+        channel.setFileptr(fileptr);
+        
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_close(fileptr)).thenReturn(0);
+
+        channel.implCloseChannel();
+        
+        PowerMockito.verifyStatic();
+        GLFS.glfs_close(fileptr);
     }
 
     @Test

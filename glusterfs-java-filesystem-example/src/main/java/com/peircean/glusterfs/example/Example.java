@@ -45,6 +45,7 @@ public class Example {
 
         try {
             Files.createFile(glusterPath, attrs);
+            System.out.println("File created");
         } catch (IOException e) {
             System.out.println("File exists");
         }

@@ -126,10 +126,10 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public int write(ByteBuffer byteBuffer) throws IOException {
-        byteBuffer.rewind();
-        byte[] buf = new byte[byteBuffer.remaining()];
-        byteBuffer.get(buf);
-        return GLFS.glfs_write(fileptr, buf, buf.length, 0);
+        byte[] buf = byteBuffer.array();
+        int written = GLFS.glfs_write(fileptr, buf, buf.length, 0);
+        byteBuffer.position(written);
+        return written;
     }
 
     @Override
@@ -204,6 +204,6 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     protected void implCloseChannel() throws IOException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        GLFS.glfs_close(fileptr);
     }
 }
