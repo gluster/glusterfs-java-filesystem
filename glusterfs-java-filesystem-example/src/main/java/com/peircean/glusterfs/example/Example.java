@@ -1,5 +1,8 @@
 package com.peircean.glusterfs.example;
 
+import com.peircean.glusterfs.GlusterFileSystem;
+import com.peircean.glusterfs.GlusterPath;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,6 +37,14 @@ public class Example {
         System.out.println("USABLE SPACE: " + store.getUsableSpace());
         System.out.println("UNALLOCATED SPACE: " + store.getUnallocatedSpace());
         System.out.println(fileSystem.toString());
+
+        String hidden = "/foo/.bar";
+        boolean isHidden = fileSystem.provider().isHidden(new GlusterPath(((GlusterFileSystem) fileSystem), hidden));
+        System.out.println("Is "+hidden+" hidden? "+isHidden);
+
+        hidden = "/foo/bar";
+        isHidden = fileSystem.provider().isHidden(new GlusterPath(((GlusterFileSystem) fileSystem), hidden));
+        System.out.println("Is "+hidden+" hidden? "+isHidden);
 
         Set<PosixFilePermission> posixFilePermissions = PosixFilePermissions.fromString("rw-rw-rw-");
         FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(posixFilePermissions);

@@ -166,7 +166,7 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public boolean isHidden(Path path) throws IOException {
-        return false;
+        return ((GlusterPath) path.getFileName()).getParts()[0].startsWith(".");
     }
 
     @Override

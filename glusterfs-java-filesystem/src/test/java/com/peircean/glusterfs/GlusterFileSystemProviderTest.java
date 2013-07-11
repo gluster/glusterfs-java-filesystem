@@ -7,6 +7,7 @@ import org.fusesource.glfsjni.internal.structs.statvfs;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -314,6 +315,28 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
         verifyStatic();
         GlusterFileAttributes.fromStat(stat);
+    }
+    
+    @Test
+    public void testIsHidden_whenNotHidden() throws IOException {
+        GlusterPath pathName = Mockito.mock(GlusterPath.class);
+        doReturn(new String[]{"foo"}).when(pathName).getParts();
+        doReturn(pathName).when(mockPath).getFileName();
+        boolean hidden = provider.isHidden(mockPath);
+        assertFalse(hidden);
+        verify(pathName).getParts();
+        verify(mockPath).getFileName();
+    }
+    
+    @Test
+    public void testIsHidden_whenHidden() throws IOException {
+        GlusterPath pathName = Mockito.mock(GlusterPath.class);
+        doReturn(new String[]{".foo"}).when(pathName).getParts();
+        doReturn(pathName).when(mockPath).getFileName();
+        boolean hidden = provider.isHidden(mockPath);
+        assertTrue(hidden);
+        verify(pathName).getParts();
+        verify(mockPath).getFileName();
     }
 
     @Test
