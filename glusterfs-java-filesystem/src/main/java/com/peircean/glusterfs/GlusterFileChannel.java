@@ -70,22 +70,18 @@ public class GlusterFileChannel extends FileChannel {
         int flags = parseOptions(options);
         int mode = parseAttrs(attrs);
 
-        System.out.println(options);
-
         String pathString = path.toUri().getPath();
         boolean createNew = options.contains(StandardOpenOption.CREATE_NEW);
         if (options.contains(StandardOpenOption.CREATE) || createNew) {
             fileptr = GLFS.glfs_creat(fileSystem.getVolptr(), pathString, flags, mode);
-            System.out.println("CREATE: "+fileptr);
         }
-        
+
         if (createNew && 0 == fileptr) {
             throw new FileAlreadyExistsException(path.toString());
         }
-        
+
         if (0 >= fileptr) {
             fileptr = GLFS.glfs_open(fileSystem.getVolptr(), pathString, flags);
-            System.out.println("OPEN: "+fileptr);
         }
 
         if (0 >= fileptr) {
@@ -118,7 +114,9 @@ public class GlusterFileChannel extends FileChannel {
 
     @Override
     public int read(ByteBuffer byteBuffer) throws IOException {
-        return 0;
+        byte[] bytes = byteBuffer.array();
+        long read = GLFS.glfs_read(fileptr, bytes, bytes.length, 0);
+        return (int) read;
     }
 
     @Override

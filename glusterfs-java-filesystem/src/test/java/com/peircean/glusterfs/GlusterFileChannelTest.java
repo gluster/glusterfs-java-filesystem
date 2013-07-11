@@ -48,6 +48,8 @@ public class GlusterFileChannelTest extends TestCase {
     @Captor
     private ArgumentCaptor<Integer> lengthCaptor;
     @Captor
+    private ArgumentCaptor<Long> longLengthCaptor;
+    @Captor
     private ArgumentCaptor<byte[]> inputByteArrayCaptor;
     @Captor
     private ArgumentCaptor<byte[]> outputByteArrayCaptor;
@@ -160,8 +162,32 @@ public class GlusterFileChannelTest extends TestCase {
     }
 
     @Test
+    public void testRead1Arg() throws IOException {
+        long fileptr = 1234l;
+        channel.setFileptr(fileptr);
+
+        byte[] bytes = new byte[]{'a', 'b', 'c'};
+        long bufferLength = bytes.length;
+        
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_read(fileptr, bytes, bufferLength, 0)).thenReturn(bufferLength);
+
+        doReturn(bytes).when(mockBuffer).array();
+
+        int read = channel.read(mockBuffer);
+        
+        assertEquals(bufferLength, read);
+
+        verify(mockBuffer).array();
+
+        PowerMockito.verifyStatic();
+        GLFS.glfs_read(fileptr, bytes, bufferLength, 0);
+    }
+
+    @Test
     public void testWrite1Arg() throws IOException {
-        channel.setFileptr(1234l);
+        long fileptr = 1234l;
+        channel.setFileptr(fileptr);
 
         PowerMockito.mockStatic(GLFS.class);
         int bufferLength = 3;
@@ -188,6 +214,8 @@ public class GlusterFileChannelTest extends TestCase {
         byte[] outputByteArray = outputByteArrayCaptor.getValue();
         assertTrue(inputByteArray == outputByteArray);
 
+        assertEquals(fileptr, (long)fileptrCaptor.getValue());
+        
         verify(mockBuffer).rewind();
         verify(mockBuffer).remaining();
         verify(mockBuffer).get(isA(byte[].class));
