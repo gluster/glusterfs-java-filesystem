@@ -486,11 +486,33 @@ public class GlusterPathTest extends TestCase {
     }
 
     @Test
-    public void testToString() {
+    public void testToString_whenPathString() {
         String pathString = "/bar/baz";
         Path p = new GlusterPath(mockFileSystem, pathString);
         String filesystemString = "gluster://127.0.2.1:foo";
         doReturn(filesystemString).when(mockFileSystem).toString();
         assertEquals(filesystemString + pathString, p.toString());
+    }
+    
+    @Test
+    public void testToString_whenNoPathString() {
+        Path p = new GlusterPath(mockFileSystem, new String[]{"a", "b"}, true);
+        String filesystemString = "gluster://127.0.2.1:foo";
+        doReturn(filesystemString).when(mockFileSystem).toString();
+        assertEquals(filesystemString + "/a/b", p.toString());
+    }
+    
+    @Test
+    public void testGetString_whenPathString() {
+        String string = "/foo/bar";
+        GlusterPath path = new GlusterPath(mockFileSystem, string);
+        path.setParts(new String[]{"a", "b"});
+        assertEquals(string, path.getString());
+    }
+    
+    @Test
+    public void testGetString_whenNoPathString() {
+        GlusterPath path = new GlusterPath(mockFileSystem, new String[]{"a", "b"}, false);
+        assertEquals("a/b", path.getString());
     }
 }

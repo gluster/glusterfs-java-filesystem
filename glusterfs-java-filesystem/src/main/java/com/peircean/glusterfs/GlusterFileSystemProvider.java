@@ -11,7 +11,10 @@ import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
-import java.nio.file.attribute.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
@@ -143,6 +146,14 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void delete(Path path) throws IOException {
+//        GlusterFileAttributes glusterFileAttributes = readAttributes(path, GlusterFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+//        if ()
+//
+//        GlusterFileSystem fileSystem = (GlusterFileSystem) path.getFileSystem();
+//        int unl = GLFS.glfs_unlink(fileSystem.getVolptr(), ((GlusterPath) path).getString());
+//        if (-1 == unl) {
+//            throw new IOException();
+//        }
 
     }
 
@@ -173,7 +184,35 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void checkAccess(Path path, AccessMode... accessModes) throws IOException {
+        long volptr = ((GlusterFileSystem) path.getFileSystem()).getVolptr();
+        String pathString = ((GlusterPath) path).getString();
+        
+        stat stat = new stat();
+        int ret = GLFS.glfs_lstat(volptr, pathString, stat);
 
+        if (-1 == ret) {
+            throw new NoSuchFileException("");
+        }
+        
+        for (AccessMode m : accessModes) {
+            int access = GLFS.glfs_access(volptr, pathString, modeInt(m));
+            if (-1 == access) {
+                throw new AccessDeniedException(pathString);
+            }
+        }
+
+    }
+
+    private int modeInt(AccessMode m) {
+        switch (m) {
+            case EXECUTE:
+                return 1;
+            case WRITE:
+                return 2;
+            case READ:
+                return 4;
+        }
+        return -1;
     }
 
     @Override
@@ -185,7 +224,7 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... linkOptions) throws IOException {
 //        if (!type.isAssignableFrom(GlusterFileAttributes.class)) { // Why doesn't this work when type is GlusterFileAttributes.class?!
         if (type.equals(DosFileAttributes.class)) {
-            throw new UnsupportedOperationException(type+" attribute type is not supported, only PosixFileAttributes & its superinterfaces");
+            throw new UnsupportedOperationException(type + " attribute type is not supported, only PosixFileAttributes & its superinterfaces");
         }
         stat stat = new stat();
 
@@ -196,12 +235,18 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
                 break;
             }
         }
-
+        int ret;
+        String pathString = ((GlusterPath) path).getString();
         if (followSymlinks) {
-            GLFS.glfs_stat(((GlusterFileSystem) path.getFileSystem()).getVolptr(), path.toUri().getPath(), stat);
+            ret = GLFS.glfs_stat(((GlusterFileSystem) path.getFileSystem()).getVolptr(), pathString, stat);
         } else {
-            GLFS.glfs_lstat(((GlusterFileSystem) path.getFileSystem()).getVolptr(), path.toUri().getPath(), stat);
+            ret = GLFS.glfs_lstat(((GlusterFileSystem) path.getFileSystem()).getVolptr(), pathString, stat);
         }
+
+        if (-1 == ret) {
+            throw new NoSuchFileException("");
+        }
+
         return (A) GlusterFileAttributes.fromStat(stat);
     }
 

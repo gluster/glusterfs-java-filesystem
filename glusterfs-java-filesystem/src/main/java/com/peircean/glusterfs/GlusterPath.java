@@ -1,6 +1,8 @@
 package com.peircean.glusterfs;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +15,8 @@ import java.util.*;
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
 @Data
+@EqualsAndHashCode(exclude = "pathString")
+@ToString(exclude = "pathString")
 public class GlusterPath implements Path {
     private GlusterFileSystem fileSystem;
     private String[] parts;
@@ -27,6 +31,7 @@ public class GlusterPath implements Path {
             throw new InvalidPathException("", "path can not be null");
         }
         this.fileSystem = fileSystem;
+        this.pathString = path;
 
         String stripped = path;
         if (path.startsWith(fileSystem.getSeparator())) {
@@ -306,11 +311,19 @@ public class GlusterPath implements Path {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder((absolute ? fileSystem.getSeparator() : ""));
-        for (String p : parts) {
-            sb.append(p).append(fileSystem.getSeparator());
+        return fileSystem.toString() + getString();
+    }
+
+    public String getString() {
+        if (null != pathString) {
+            return pathString;
+        } else {
+            StringBuilder sb = new StringBuilder((absolute ? fileSystem.getSeparator() : ""));
+            for (String p : parts) {
+                sb.append(p).append(fileSystem.getSeparator());
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            return sb.toString();
         }
-        sb.deleteCharAt(sb.length() - 1);
-        return fileSystem.toString() + sb.toString();
     }
 }

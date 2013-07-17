@@ -68,6 +68,14 @@ public class Example {
         byte[] readBytes = Files.readAllBytes(glusterPath);
         System.out.println(hello + world + " == " + new String(readBytes));
         System.out.println("Last modified: " + Files.getLastModifiedTime(glusterPath) + " (should be now)");
+        fileSystem.provider().checkAccess(glusterPath, AccessMode.READ, AccessMode.WRITE);
+        System.out.println("Can read & write file");
+        try {
+            fileSystem.provider().checkAccess(glusterPath, AccessMode.EXECUTE);
+            System.out.println("Uh oh, file is executable, that's bad.");
+        }catch (AccessDeniedException e) {
+            System.out.println("Can't execute file, that's good.");
+        }
         fileSystem.close();
     }
 }

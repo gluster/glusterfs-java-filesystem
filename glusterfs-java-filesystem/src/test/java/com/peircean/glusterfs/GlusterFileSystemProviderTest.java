@@ -244,15 +244,23 @@ public class GlusterFileSystemProviderTest extends TestCase {
         provider.readAttributes(mockPath, DosFileAttributes.class);
     }
 
+    @Test(expected = NoSuchFileException.class)
+    public void testReadAttributes_followLinks_whenNoSuchFile() throws Exception {
+        testReadAttributes_followLinks_helper(false);
+    }
+    
     @Test
     public void testReadAttributes_followLinks() throws Exception {
+        testReadAttributes_followLinks_helper(true);
+    }
+    
+    private void testReadAttributes_followLinks_helper(boolean success) throws Exception {
         long volptr = 1234l;
         String path = "/foo/bar";
-        URI uri = new URI("gluster://foo:bar" + path);
-
+        
         doReturn(mockFileSystem).when(mockPath).getFileSystem();
         doReturn(volptr).when(mockFileSystem).getVolptr();
-        doReturn(uri).when(mockPath).toUri();
+        doReturn(path).when(mockPath).getString();
         
         stat stat = new stat();
         whenNew(stat.class).withNoArguments().thenReturn(stat);
@@ -262,7 +270,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         when(GlusterFileAttributes.fromStat(stat)).thenReturn(fakeAttributes);
 
         mockStatic(GLFS.class);
-        when(GLFS.glfs_stat(volptr, path, stat)).thenReturn(0);
+        when(GLFS.glfs_stat(volptr, path, stat)).thenReturn(success ? 0 : -1);
 
         GlusterFileAttributes attributes = provider.readAttributes(mockPath, GlusterFileAttributes.class);
 
@@ -270,7 +278,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
         verify(mockPath).getFileSystem();
         verify(mockFileSystem).getVolptr();
-        verify(mockPath).toUri();
+        verify(mockPath).getString();
 
         verifyNew(stat.class).withNoArguments();
 
@@ -281,15 +289,23 @@ public class GlusterFileSystemProviderTest extends TestCase {
         GlusterFileAttributes.fromStat(stat);
     }
 
+    @Test(expected = NoSuchFileException.class)
+    public void testReadAttributes_dontFollowLinks_whenNoSuchFile() throws Exception {
+        readAttributes_dontFollowLinks_helper(false);
+    }
+
     @Test
     public void testReadAttributes_dontFollowLinks() throws Exception {
+        readAttributes_dontFollowLinks_helper(true);
+    }
+    
+    private void readAttributes_dontFollowLinks_helper(boolean success) throws Exception {
         long volptr = 1234l;
         String path = "/foo/bar";
-        URI uri = new URI("gluster://foo:bar" + path);
         
         doReturn(mockFileSystem).when(mockPath).getFileSystem();
         doReturn(volptr).when(mockFileSystem).getVolptr();
-        doReturn(uri).when(mockPath).toUri();
+        doReturn(path).when(mockPath).getString();
 
         stat stat = new stat();
         whenNew(stat.class).withNoArguments().thenReturn(stat);
@@ -299,7 +315,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         when(GlusterFileAttributes.fromStat(stat)).thenReturn(fakeAttributes);
 
         mockStatic(GLFS.class);
-        when(GLFS.glfs_lstat(volptr, path, stat)).thenReturn(0);
+        when(GLFS.glfs_lstat(volptr, path, stat)).thenReturn(success ? 0 : -1);
 
         GlusterFileAttributes attributes = provider.readAttributes(mockPath, GlusterFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
 
@@ -307,7 +323,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
         verify(mockPath).getFileSystem();
         verify(mockFileSystem).getVolptr();
-        verify(mockPath).toUri();
+        verify(mockPath).getString();
 
         verifyNew(stat.class).withNoArguments();
 
@@ -316,6 +332,31 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
         verifyStatic();
         GlusterFileAttributes.fromStat(stat);
+    }
+    
+//    @Test(expected = NoSuchFileException.class)
+    public void testDelete_whenFileDoesNotExist() throws IOException {
+    }
+    
+//    @Test
+    public void testDelete_whenDirectoryIsNotEmpty() throws IOException {
+    }
+    
+//    @Test(expected = IOException.class)
+    public void testDelete_whenFailing() throws IOException {
+//        long volptr = 1234l;
+//        String path = "/foo";
+//        doReturn(volptr).when(mockFileSystem).getVolptr();
+//        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+//        PowerMockito.doReturn(path).when(mockPath).getString();
+//        PowerMockito.mockStatic(GLFS.class);
+//        when(GLFS.glfs_unlink(volptr, path)).thenReturn(-1);
+//        provider.delete(mockPath);
+    }
+    
+    @Test
+    public void testDelete() throws IOException {
+        
     }
     
     @Test
@@ -338,6 +379,60 @@ public class GlusterFileSystemProviderTest extends TestCase {
         assertTrue(hidden);
         verify(pathName).getParts();
         verify(mockPath).getFileName();
+    }
+    
+    @Test(expected = NoSuchFileException.class)
+    public void testCheckAccess_whenFileDoesNotExist() throws IOException {
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        long volptr = 1234l;
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+        String path = "/foo/bar";
+        doReturn(path).when(mockPath).getString();
+        stat stat = new stat();
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_lstat(volptr, path, stat)).thenReturn(-1);
+        AccessMode accessMode = AccessMode.READ;
+        provider.checkAccess(mockPath, accessMode);
+    }
+    
+    @Test(expected = AccessDeniedException.class)
+    public void testCheckAccess_whenDenied() throws IOException {
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        long volptr = 1234l;
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+        String path = "/foo/bar";
+        doReturn(path).when(mockPath).getString();
+        int mode = 4;
+        stat stat = new stat();
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_lstat(volptr, path, stat)).thenReturn(0);
+        when(GLFS.glfs_access(volptr, path, mode)).thenReturn(-1);
+        AccessMode accessMode = AccessMode.READ;
+        provider.checkAccess(mockPath, accessMode);
+    }
+    
+    @Test
+    public void testCheckAccess() throws IOException {
+        long volptr = 1234l;
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+        String path = "/foo/bar";
+        doReturn(path).when(mockPath).getString();
+        int mode = 4;
+        stat stat = new stat();
+        PowerMockito.mockStatic(GLFS.class);
+        when(GLFS.glfs_lstat(volptr, path, stat)).thenReturn(0);
+        when(GLFS.glfs_access(volptr, path, mode)).thenReturn(0);
+        AccessMode accessMode = AccessMode.READ;
+        provider.checkAccess(mockPath, accessMode);
+        
+        PowerMockito.verifyStatic();
+        GLFS.glfs_access(volptr, path, mode);
+        
+        verify(mockPath).getFileSystem();
+        verify(mockFileSystem).getVolptr();
+        verify(mockPath).getString();
+
     }
 
     @Test
