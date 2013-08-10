@@ -1,7 +1,7 @@
 package com.peircean.glusterfs;
 
 import junit.framework.TestCase;
-import org.fusesource.glfsjni.internal.structs.stat;
+import com.peircean.libgfapi_jni.internal.structs.stat;
 import org.junit.Test;
 
 import java.nio.file.attribute.FileTime;

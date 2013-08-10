@@ -2,9 +2,9 @@ package com.peircean.glusterfs;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.fusesource.glfsjni.internal.GLFS;
-import org.fusesource.glfsjni.internal.structs.stat;
-import org.fusesource.glfsjni.internal.structs.statvfs;
+import com.peircean.libgfapi_jni.internal.GLFS;
+import com.peircean.libgfapi_jni.internal.structs.stat;
+import com.peircean.libgfapi_jni.internal.structs.statvfs;
 
 import java.io.IOException;
 import java.net.URI;
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static org.fusesource.glfsjni.internal.GLFS.*;
+import static com.peircean.libgfapi_jni.internal.GLFS.*;
 
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>

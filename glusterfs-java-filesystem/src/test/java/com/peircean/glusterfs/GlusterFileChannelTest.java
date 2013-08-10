@@ -1,9 +1,9 @@
 package com.peircean.glusterfs;
 
 import junit.framework.TestCase;
-import org.fusesource.glfsjni.internal.GLFS;
-import org.fusesource.glfsjni.internal.GlusterOpenOption;
-import org.fusesource.glfsjni.internal.structs.stat;
+import com.peircean.libgfapi_jni.internal.GLFS;
+import com.peircean.libgfapi_jni.internal.GlusterOpenOption;
+import com.peircean.libgfapi_jni.internal.structs.stat;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

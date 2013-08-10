@@ -3,9 +3,9 @@ package com.peircean.glusterfs;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.fusesource.glfsjni.internal.GLFS;
-import org.fusesource.glfsjni.internal.GlusterOpenOption;
-import org.fusesource.glfsjni.internal.structs.stat;
+import com.peircean.libgfapi_jni.internal.GLFS;
+import com.peircean.libgfapi_jni.internal.GlusterOpenOption;
+import com.peircean.libgfapi_jni.internal.structs.stat;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
