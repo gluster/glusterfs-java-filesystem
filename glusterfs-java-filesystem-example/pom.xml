@@ -9,7 +9,36 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.peircean.glusterfs</groupId>
     <artifactId>glusterfs-java-filesystem-example</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>java</executable>
+                    <arguments>
+                        <argument>-classpath</argument>
+                        <!-- automatically creates the classpath using all project dependencies,
+                             also adding the project build directory -->
+                        <classpath/>
+                        <argument>com.peircean.glusterfs.example.Example</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>

@@ -10,6 +10,8 @@ of the capabilities of this project from a high level consumer's point of view.
 
 `glusterfs-java-filesystem-example/src/main/java/com/peircean/glusterfs/example/Example.java`
 
+The example program can be run with maven by executing `mvn exec:exec` in the glusterfs-java-filesystem-example directory.
+
 # Project License
 
 Until further notice (made here and in LICENSE.txt) this project is licensed under the terms of the
