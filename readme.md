@@ -15,7 +15,7 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 
 # Roadmap
 
-## TODO:
+### TODO:
 
 - Read directory contents
 - Watch files for changes
@@ -24,7 +24,7 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 - Asychronous file I/O
 - Better error reporting & handling
 
-## Completed:
+### Completed:
 
 - Connect to a GlusterFS volume using the NIO.2 API
 - Basic synchronous file I/O
