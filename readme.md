@@ -28,14 +28,13 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 
 - Connect to a GlusterFS volume using the NIO.2 API
 - Basic synchronous file I/O   
-    Read the contents of a file all at once
+    Read the contents of a file all at once   
     Write a chunk of bytes to a file all at once
 - File attributes   
-    See & set owner, permissions, and last modified timestamp on files and directories
+    See & set owner, permissions, and last modified timestamp on files and directories   
     See file size
 - Filesystem/volume stats   
     See the total, free, and usable bytes in a volume
-    
 
 # Project License
 
