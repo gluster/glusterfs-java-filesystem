@@ -19,7 +19,7 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 
 - Read directory contents
 - Watch files for changes
-- Advanced synchronous file I/O
+- Advanced synchronous file I/O   
     Seeking & reading/writing a portion of a file
 - Asychronous file I/O
 - Better error reporting & handling
@@ -27,13 +27,13 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 ### Completed:
 
 - Connect to a GlusterFS volume using the NIO.2 API
-- Basic synchronous file I/O
+- Basic synchronous file I/O   
     Read the contents of a file all at once
     Write a chunk of bytes to a file all at once
-- File attributes
+- File attributes   
     See & set owner, permissions, and last modified timestamp on files and directories
     See file size
-- Filesystem/volume stats
+- Filesystem/volume stats   
     See the total, free, and usable bytes in a volume
     
 
