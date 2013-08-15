@@ -1,6 +1,4 @@
 language: java
-install: mvn '-P!building' install -DskipTests=true
-script: mvn '-P!building' test
 jdk:
   - openjdk7
   - oraclejdk7

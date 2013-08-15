@@ -44,8 +44,29 @@
             </plugin>
         </plugins>
     </build>
+    
+    <repositories>
+        <repository>
+            <id>peircean</id>
+            <url>http://z.peircean.com/</url>
+            <snapshots><enabled>true</enabled></snapshots>
+            <releases><enabled>true</enabled></releases>
+        </repository>
+    </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>com.peircean.libgfapi-jni</groupId>
+            <artifactId>libgfapi-jni</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.peircean.libgfapi-jni</groupId>
+            <artifactId>libgfapi-linux64</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -68,25 +89,4 @@
         </dependency>
     </dependencies>
 
-    <profiles>
-        <profile>
-            <id>building</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>com.peircean.libgfapi-jni</groupId>
-                    <artifactId>libgfapi-jni</artifactId>
-                    <version>1.0-SNAPSHOT</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>com.peircean.libgfapi-jni</groupId>
-                    <artifactId>libgfapi-linux64</artifactId>
-                    <version>1.0-SNAPSHOT</version>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
 </project>
