@@ -17,6 +17,7 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 
 ### TODO:
 
+- Set up travis-ci & coveralls
 - Read directory contents
 - Watch files for changes
 - Advanced synchronous file I/O   
