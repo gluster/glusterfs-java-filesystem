@@ -1,4 +1,8 @@
 language: java
 jdk:
   - openjdk7
-  - oraclejdk7
+before_install:
+  - sudo add-apt-repository ppa:semiosis/ubuntu-glusterfs-3.4 -y
+  - sudo apt-get update -qq -y
+  - sudo apt-get install glusterfs-common -y
+after_script:  bash catlogs.sh
