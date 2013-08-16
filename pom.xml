@@ -77,7 +77,7 @@
 
     <repositories>
         <repository>
-            <id>peircean</id>
+            <id>peircean-snapshot</id>
             <url>http://maven.peircean.com/snapshot</url>
             <snapshots>
                 <enabled>true</enabled>
@@ -87,7 +87,7 @@
             </releases>
         </repository>
         <repository>
-            <id>peircean</id>
+            <id>peircean-release</id>
             <url>http://maven.peircean.com/release</url>
             <snapshots>
                 <enabled>true</enabled>
