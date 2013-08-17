@@ -6,3 +6,5 @@ before_install:
   - sudo apt-get update -qq -y
   - sudo apt-get install glusterfs-common -y
 after_script:  bash catlogs.sh
+notifications:
+  email: false
