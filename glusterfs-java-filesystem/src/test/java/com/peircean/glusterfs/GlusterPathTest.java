@@ -300,28 +300,6 @@ public class GlusterPathTest extends TestCase {
     }
 
     @Test
-    public void testEndsWith_String() {
-        Path p1 = new GlusterPath(mockFileSystem, "/");
-        assertTrue(p1.endsWith("/"));
-
-        Path p2 = new GlusterPath(mockFileSystem, "/foo");
-        assertFalse(p1.endsWith("/foo"));
-
-        p1 = new GlusterPath(mockFileSystem, "/foo");
-        assertTrue(p1.endsWith("/foo"));
-
-        p2 = new GlusterPath(mockFileSystem, "foo");
-        assertTrue(p1.endsWith("foo"));
-
-        p1 = new GlusterPath(mockFileSystem, "foo/bar");
-        p2 = new GlusterPath(mockFileSystem, "bar");
-        assertTrue(p1.endsWith("bar"));
-
-        p2 = new GlusterPath(mockFileSystem, "/bar");
-        assertFalse(p1.endsWith("/bar"));
-    }
-
-    @Test
     public void testNormalize() {
         Path p = new GlusterPath(mockFileSystem, "foo//bar");
         assertEquals(new GlusterPath(mockFileSystem, "foo/bar"), p.normalize());
@@ -493,7 +471,7 @@ public class GlusterPathTest extends TestCase {
         doReturn(filesystemString).when(mockFileSystem).toString();
         assertEquals(filesystemString + pathString, p.toString());
     }
-    
+
     @Test
     public void testToString_whenNoPathString() {
         Path p = new GlusterPath(mockFileSystem, new String[]{"a", "b"}, true);
@@ -501,7 +479,7 @@ public class GlusterPathTest extends TestCase {
         doReturn(filesystemString).when(mockFileSystem).toString();
         assertEquals(filesystemString + "/a/b", p.toString());
     }
-    
+
     @Test
     public void testGetString_whenPathString() {
         String string = "/foo/bar";
@@ -509,7 +487,7 @@ public class GlusterPathTest extends TestCase {
         path.setParts(new String[]{"a", "b"});
         assertEquals(string, path.getString());
     }
-    
+
     @Test
     public void testGetString_whenNoPathString() {
         GlusterPath path = new GlusterPath(mockFileSystem, new String[]{"a", "b"}, false);

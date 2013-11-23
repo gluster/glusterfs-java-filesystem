@@ -140,6 +140,7 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
         GlusterDirectoryStream stream = new GlusterDirectoryStream();
         stream.setFileSystem(glusterPath.getFileSystem());
         stream.open(glusterPath);
+        stream.setFilter(filter);
 
         return stream;
     }
@@ -211,14 +212,14 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     public void checkAccess(Path path, AccessMode... accessModes) throws IOException {
         long volptr = ((GlusterFileSystem) path.getFileSystem()).getVolptr();
         String pathString = ((GlusterPath) path).getString();
-        
+
         stat stat = new stat();
         int ret = GLFS.glfs_lstat(volptr, pathString, stat);
 
         if (-1 == ret) {
             throw new NoSuchFileException("");
         }
-        
+
         for (AccessMode m : accessModes) {
             int access = GLFS.glfs_access(volptr, pathString, modeInt(m));
             if (-1 == access) {

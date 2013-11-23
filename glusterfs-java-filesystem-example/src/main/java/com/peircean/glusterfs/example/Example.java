@@ -91,7 +91,33 @@ public class Example {
         } catch (NotDirectoryException e) {
             System.out.println("Can't list directory of a file, good.");
         }
-        DirectoryStream<Path> stream = Files.newDirectoryStream(mountPath);
+        DirectoryStream.Filter<? super Path> filter = new DirectoryStream.Filter<Path>() {
+            @Override
+            public boolean accept(Path entry) throws IOException {
+                return entry.endsWith("1");
+            }
+        };
+        DirectoryStream<Path> stream = Files.newDirectoryStream(mountPath, filter);
+        System.out.println("Mount contents:");
+
+        for (Path p : stream) {
+            System.out.println(p.toString());
+        }
+
+        filter = new DirectoryStream.Filter<Path>() {
+            @Override
+            public boolean accept(Path entry) throws IOException {
+                return entry.endsWith("a");
+            }
+        };
+        stream = Files.newDirectoryStream(mountPath, filter);
+        System.out.println("Mount contents:");
+
+        for (Path p : stream) {
+            System.out.println(p.toString());
+        }
+
+        stream = Files.newDirectoryStream(mountPath);
         System.out.println("Mount contents:");
 
         for (Path p : stream) {

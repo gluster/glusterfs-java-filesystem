@@ -15,6 +15,7 @@ public class GlusterDirectoryStream implements DirectoryStream<Path> {
     private GlusterDirectoryIterator iterator;
     private boolean closed = false;
     private GlusterPath dir;
+    private DirectoryStream.Filter<? super Path> filter;
 
     @Override
     public Iterator<Path> iterator() {
@@ -23,6 +24,7 @@ public class GlusterDirectoryStream implements DirectoryStream<Path> {
         }
         GlusterDirectoryIterator iterator = new GlusterDirectoryIterator();
         iterator.setStream(this);
+        iterator.setFilter(filter);
         this.iterator = iterator;
         return iterator;
     }

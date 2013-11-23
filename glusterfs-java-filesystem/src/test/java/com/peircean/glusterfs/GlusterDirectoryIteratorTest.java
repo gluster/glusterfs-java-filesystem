@@ -12,13 +12,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.nio.file.DirectoryStream;
+import java.nio.file.Path;
 import java.util.NoSuchElementException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({GLFS.class, GlusterDirectoryIterator.class, dirent.class})
@@ -37,28 +36,62 @@ public class GlusterDirectoryIteratorTest {
     private dirent mockCurrentDirent;
     @Mock
     private dirent mockNextDirent;
+    @Mock
+    private DirectoryStream.Filter<? super Path> mockFilter;
     @Spy
     private GlusterDirectoryIterator iterator = new GlusterDirectoryIterator();
     private long dirHandle = 12345l;
 
     @Test
-    public void testHasNext_whenNoNext() throws Exception {
-        helperTestHasNext(false);
+    public void testHasNext_whenFilter() throws Exception {
+        iterator.setFilter(mockFilter);
+        iterator.setNextPath(fakeResultPath);
+        when(mockFilter.accept(fakeResultPath)).thenReturn(false).thenReturn(true);
+        mockNextDirent.d_ino = 1;
+        iterator.setNext(mockNextDirent);
+        doNothing().when(iterator).advance();
+        assertTrue(iterator.hasNext());
+        verify(iterator, times(2)).advance();
+        verify(mockFilter, times(2)).accept(fakeResultPath);
     }
 
     @Test
-    public void testHasNext() throws Exception {
-        helperTestHasNext(true);
+    public void testHasNext_whenFilter_andNoNext() throws Exception {
+        iterator.setFilter(mockFilter);
+        iterator.setNextPath(fakeResultPath);
+        when(mockFilter.accept(fakeResultPath)).thenReturn(false).thenReturn(true);
+        mockNextDirent.d_ino = 0;
+        iterator.setNext(mockNextDirent);
+        doNothing().when(iterator).advance();
+        assertFalse(iterator.hasNext());
+        verify(iterator).advance();
+        verify(mockFilter).accept(fakeResultPath);
     }
 
-    private void helperTestHasNext(boolean has) throws Exception {
-        mockNextDirent.d_ino = (has ? 1 : 0);
+    @Test
+    public void testHasNext_whenNoFilter_andNoNext() throws Exception {
+        mockNextDirent.d_ino = 0;
+        iterator.setNext(mockNextDirent);
+        doNothing().when(iterator).advance();
+        assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    public void testHasNext_whenNoFilter() throws Exception {
+        mockNextDirent.d_ino = 1;
+        iterator.setNext(mockNextDirent);
+        doNothing().when(iterator).advance();
+        assertTrue(iterator.hasNext());
+    }
+
+    @Test
+    public void testAdvance() throws Exception {
         doReturn(dirHandle).when(mockStream).getDirHandle();
         iterator.setStream(mockStream);
-        whenNew(dirent.class).withNoArguments().thenReturn(mockCurrentDirent).thenReturn(mockNextDirent);
+        PowerMockito.whenNew(dirent.class).withNoArguments().thenReturn(mockCurrentDirent).thenReturn(mockNextDirent);
 
         long nextPtr = 4444l;
-        mockStatic(dirent.class);
+        PowerMockito.mockStatic(dirent.class);
         Mockito.when(dirent.malloc(dirent.SIZE_OF)).thenReturn(nextPtr);
 
         PowerMockito.doNothing().when(dirent.class);
@@ -66,16 +99,26 @@ public class GlusterDirectoryIteratorTest {
         PowerMockito.doNothing().when(dirent.class);
         dirent.free(nextPtr);
 
-        mockStatic(GLFS.class);
+        PowerMockito.mockStatic(GLFS.class);
         PowerMockito.when(GLFS.glfs_readdir_r(dirHandle, mockCurrentDirent, nextPtr)).thenReturn(0);
 
-        boolean ret = iterator.hasNext();
+        Mockito.doReturn(mockPath).when(mockStream).getDir();
+        String stringPath = "foo";
+        Mockito.doReturn(stringPath).when(mockCurrentDirent).getName();
+        Mockito.doReturn(fakeResultPath).when(mockPath).resolve(stringPath);
 
-        assertTrue(ret == has);
+        iterator.advance();
+
+        assertEquals(fakeResultPath, iterator.getNextPath());
+
+        verify(mockCurrentDirent).getName();
+        verify(mockPath).resolve(stringPath);
+        verify(mockStream).getDir();
+
 
         verify(mockStream).getDirHandle();
-        verifyNew(dirent.class, times(2)).withNoArguments();
-        verifyStatic();
+        PowerMockito.verifyNew(dirent.class, times(2)).withNoArguments();
+        PowerMockito.verifyStatic();
         dirent.memmove(mockNextDirent, nextPtr, dirent.SIZE_OF);
         dirent.free(nextPtr);
     }
@@ -87,21 +130,9 @@ public class GlusterDirectoryIteratorTest {
 
     @Test
     public void testNext() {
-        iterator.setStream(mockStream);
-        iterator.setCurrent(mockCurrentDirent);
-
-        Mockito.doReturn(mockPath).when(mockStream).getDir();
-        String stringPath = "foo";
-        Mockito.doReturn(stringPath).when(mockCurrentDirent).getName();
-        Mockito.doReturn(fakeResultPath).when(mockPath).resolve(stringPath);
-
+        iterator.setNextPath(fakeResultPath);
         GlusterPath path = iterator.next();
-
         assertEquals(fakeResultPath, path);
-
-        verify(mockCurrentDirent).getName();
-        verify(mockPath).resolve(stringPath);
-        verify(mockStream).getDir();
     }
 
     @Test(expected = UnsupportedOperationException.class)

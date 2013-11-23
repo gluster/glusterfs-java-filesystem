@@ -159,7 +159,7 @@ public class GlusterPath implements Path {
 
     @Override
     public boolean endsWith(String s) {
-        return endsWith(new GlusterPath(fileSystem, s));
+        return toString().endsWith(s);
     }
 
     @Override

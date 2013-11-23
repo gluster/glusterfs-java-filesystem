@@ -4,23 +4,33 @@ import com.peircean.libgfapi_jni.internal.GLFS;
 import com.peircean.libgfapi_jni.internal.structs.dirent;
 import lombok.Data;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 @Data
 class GlusterDirectoryIterator<T> implements Iterator<GlusterPath> {
     private GlusterDirectoryStream stream;
+    private DirectoryStream.Filter<? super Path> filter;
     private dirent current, next;
+    private GlusterPath nextPath;
 
     @Override
     public boolean hasNext() {
-        current = new dirent();
-        long nextPtr = dirent.malloc(dirent.SIZE_OF);
-        GLFS.glfs_readdir_r(stream.getDirHandle(), current, nextPtr);
-
-        next = new dirent();
-        dirent.memmove(next, nextPtr, dirent.SIZE_OF);
-        dirent.free(nextPtr);
+        advance();
+        if (null != filter) {
+            try {
+                while (!filter.accept(nextPath) && next.d_ino != 0) {
+                    advance();
+                }
+            } catch (IOException e) {
+                current = null;
+                next = null;
+                return false;
+            }
+        }
 
         if (next != null && next.d_ino == 0) {
             current = null;
@@ -31,14 +41,26 @@ class GlusterDirectoryIterator<T> implements Iterator<GlusterPath> {
         return true;
     }
 
+    void advance() {
+        current = new dirent();
+        long nextPtr = dirent.malloc(dirent.SIZE_OF);
+        GLFS.glfs_readdir_r(stream.getDirHandle(), current, nextPtr);
+
+        next = new dirent();
+        dirent.memmove(next, nextPtr, dirent.SIZE_OF);
+        dirent.free(nextPtr);
+
+        String name = current.getName();
+        nextPath = (GlusterPath) stream.getDir().resolve(name);
+    }
+
     @Override
     public GlusterPath next() {
-        if (current == null) {
+        if (nextPath == null) {
             throw new NoSuchElementException("No more entries");
         }
 
-        String name = current.getName();
-        return (GlusterPath) stream.getDir().resolve(name);
+        return nextPath;
     }
 
     @Override

@@ -223,7 +223,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         URI uri = new URI("fluster://foo:bar/baz");
         provider.getPath(uri);
     }
-    
+
     @Test
     public void testGetPath_whenCached() throws URISyntaxException, IOException {
         URI uri = new URI("gluster://foo:bar/baz");
@@ -234,7 +234,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verify(provider, times(0)).newFileSystem(uri, null);
         verify(mockFileSystem).getPath(uri.getPath());
     }
-    
+
     @Test
     public void testGetPath_whenNotCached() throws URISyntaxException, IOException {
         URI uri = new URI("gluster://foo:bar/baz");
@@ -246,7 +246,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verify(provider).newFileSystem(uri, null);
         verify(mockFileSystem).getPath(uri.getPath());
     }
-    
+
     @Test(expected = UnsupportedOperationException.class)
     public void testReadAttributes_whenDosAttributes() throws IOException {
         provider.readAttributes(mockPath, DosFileAttributes.class);
@@ -256,20 +256,20 @@ public class GlusterFileSystemProviderTest extends TestCase {
     public void testReadAttributes_followLinks_whenNoSuchFile() throws Exception {
         testReadAttributes_followLinks_helper(false);
     }
-    
+
     @Test
     public void testReadAttributes_followLinks() throws Exception {
         testReadAttributes_followLinks_helper(true);
     }
-    
+
     private void testReadAttributes_followLinks_helper(boolean success) throws Exception {
         long volptr = 1234l;
         String path = "/foo/bar";
-        
+
         doReturn(mockFileSystem).when(mockPath).getFileSystem();
         doReturn(volptr).when(mockFileSystem).getVolptr();
         doReturn(path).when(mockPath).getString();
-        
+
         stat stat = new stat();
         whenNew(stat.class).withNoArguments().thenReturn(stat);
 
@@ -306,11 +306,11 @@ public class GlusterFileSystemProviderTest extends TestCase {
     public void testReadAttributes_dontFollowLinks() throws Exception {
         readAttributes_dontFollowLinks_helper(true);
     }
-    
+
     private void readAttributes_dontFollowLinks_helper(boolean success) throws Exception {
         long volptr = 1234l;
         String path = "/foo/bar";
-        
+
         doReturn(mockFileSystem).when(mockPath).getFileSystem();
         doReturn(volptr).when(mockFileSystem).getVolptr();
         doReturn(path).when(mockPath).getString();
@@ -341,16 +341,16 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verifyStatic();
         GlusterFileAttributes.fromStat(stat);
     }
-    
-//    @Test(expected = NoSuchFileException.class)
+
+    //    @Test(expected = NoSuchFileException.class)
     public void testDelete_whenFileDoesNotExist() throws IOException {
     }
-    
-//    @Test
+
+    //    @Test
     public void testDelete_whenDirectoryIsNotEmpty() throws IOException {
     }
-    
-//    @Test(expected = IOException.class)
+
+    //    @Test(expected = IOException.class)
     public void testDelete_whenFailing() throws IOException {
 //        long volptr = 1234l;
 //        String path = "/foo";
@@ -361,12 +361,12 @@ public class GlusterFileSystemProviderTest extends TestCase {
 //        when(GLFS.glfs_unlink(volptr, path)).thenReturn(-1);
 //        provider.delete(mockPath);
     }
-    
+
     @Test
     public void testDelete() throws IOException {
-        
+
     }
-    
+
     @Test
     public void testIsHidden_whenNotHidden() throws IOException {
         GlusterPath pathName = Mockito.mock(GlusterPath.class);
@@ -377,7 +377,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verify(pathName).getParts();
         verify(mockPath).getFileName();
     }
-    
+
     @Test
     public void testIsHidden_whenHidden() throws IOException {
         GlusterPath pathName = Mockito.mock(GlusterPath.class);
@@ -388,7 +388,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verify(pathName).getParts();
         verify(mockPath).getFileName();
     }
-    
+
     @Test(expected = NoSuchFileException.class)
     public void testCheckAccess_whenFileDoesNotExist() throws IOException {
         doReturn(mockFileSystem).when(mockPath).getFileSystem();
@@ -402,7 +402,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         AccessMode accessMode = AccessMode.READ;
         provider.checkAccess(mockPath, accessMode);
     }
-    
+
     @Test(expected = AccessDeniedException.class)
     public void testCheckAccess_whenDenied() throws IOException {
         doReturn(mockFileSystem).when(mockPath).getFileSystem();
@@ -418,7 +418,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
         AccessMode accessMode = AccessMode.READ;
         provider.checkAccess(mockPath, accessMode);
     }
-    
+
     @Test
     public void testCheckAccess() throws IOException {
         long volptr = 1234l;
@@ -433,10 +433,10 @@ public class GlusterFileSystemProviderTest extends TestCase {
         when(GLFS.glfs_access(volptr, path, mode)).thenReturn(0);
         AccessMode accessMode = AccessMode.READ;
         provider.checkAccess(mockPath, accessMode);
-        
+
         PowerMockito.verifyStatic();
         GLFS.glfs_access(volptr, path, mode);
-        
+
         verify(mockPath).getFileSystem();
         verify(mockFileSystem).getVolptr();
         verify(mockPath).getString();
@@ -522,17 +522,23 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
     @Test
     public void testNewDirectoryStream() throws Exception {
+        mockStatic(Files.class);
+        when(Files.isDirectory(mockPath)).thenReturn(true);
         whenNew(GlusterDirectoryStream.class).withNoArguments().thenReturn(mockStream);
         doReturn(mockFileSystem).when(mockPath).getFileSystem();
         doNothing().when(mockStream).setFileSystem(mockFileSystem);
         doNothing().when(mockStream).open(mockPath);
+        doNothing().when(mockStream).setFilter(mockFilter);
 
         DirectoryStream<Path> stream = provider.newDirectoryStream(mockPath, mockFilter);
 
         assertEquals(mockStream, stream);
         verify(mockStream).setFileSystem(mockFileSystem);
         verify(mockStream).open(mockPath);
+        verify(mockStream).setFilter(mockFilter);
         verify(mockPath).getFileSystem();
         verifyNew(GlusterDirectoryStream.class).withNoArguments();
+        verifyStatic();
+        Files.isDirectory(mockPath);
     }
 }

@@ -21,7 +21,6 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 
 - Copy files
 - Set up coveralls (travis-ci already working)
-- Filter directory contents (currently ignores any filter, but it reads!)
 - Watch files for changes
 - Advanced synchronous file I/O   
     Seeking & reading/writing a portion of a file
@@ -39,6 +38,7 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
     See file size
 - Filesystem/volume stats   
     See the total, free, and usable bytes in a volume
+- Directory listing (with filtering)
 
 # Project License
 

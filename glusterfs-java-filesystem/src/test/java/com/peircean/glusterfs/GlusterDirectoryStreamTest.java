@@ -10,6 +10,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.Iterator;
 
@@ -33,6 +34,9 @@ public class GlusterDirectoryStreamTest {
 
     @Mock
     private GlusterFileSystem mockFileSystem;
+
+    @Mock
+    private DirectoryStream.Filter<? super Path> mockFilter;
 
     @Spy
     private GlusterDirectoryStream stream = new GlusterDirectoryStream();
@@ -80,6 +84,7 @@ public class GlusterDirectoryStreamTest {
     @Test
     public void testIterator() throws Exception {
         stream.setClosed(false);
+        stream.setFilter(mockFilter);
         whenNew(GlusterDirectoryIterator.class).
                 withNoArguments().thenReturn(mockIterator);
         stream.setDirHandle(dirHandle);
@@ -88,6 +93,7 @@ public class GlusterDirectoryStreamTest {
         assertEquals(mockIterator, iterator);
         assertEquals(mockIterator, stream.getIterator());
         verify(mockIterator).setStream(stream);
+        verify(mockIterator).setFilter(mockFilter);
     }
 
     @Test
