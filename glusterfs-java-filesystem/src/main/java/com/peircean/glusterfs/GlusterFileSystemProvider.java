@@ -1,20 +1,17 @@
 package com.peircean.glusterfs;
 
-import lombok.AccessLevel;
-import lombok.Getter;
 import com.peircean.libgfapi_jni.internal.GLFS;
 import com.peircean.libgfapi_jni.internal.structs.stat;
 import com.peircean.libgfapi_jni.internal.structs.statvfs;
+import lombok.AccessLevel;
+import lombok.Getter;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.DosFileAttributes;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
@@ -136,7 +133,12 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public DirectoryStream<Path> newDirectoryStream(Path path, DirectoryStream.Filter<? super Path> filter) throws IOException {
-        return null;
+        GlusterPath glusterPath = (GlusterPath) path;
+        GlusterDirectoryStream stream = new GlusterDirectoryStream();
+        stream.setFileSystem(glusterPath.getFileSystem());
+        stream.open(glusterPath);
+
+        return stream;
     }
 
     @Override
@@ -159,7 +161,27 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void copy(Path path, Path path2, CopyOption... copyOptions) throws IOException {
+        try {
+            PosixFileAttributes attrs = readAttributes(path2, PosixFileAttributes.class);
+            boolean overwrite = false;
+            for (CopyOption co : copyOptions) {
+                if (StandardCopyOption.REPLACE_EXISTING.equals(co)) {
+                    overwrite = true;
+                    if (attrs.isDirectory() && !directoryIsEmpty(path2)) {
+                        throw new DirectoryNotEmptyException("Target not empty: " + path2);
+                    }
+                }
+            }
+            if (!overwrite) {
+                throw new FileAlreadyExistsException("Target exists: " + path2);
+            }
+        } catch (NoSuchFileException e) {
 
+        }
+    }
+
+    private boolean directoryIsEmpty(Path path) {
+        return false;  //To change body of created methods use File | Settings | File Templates.
     }
 
     @Override

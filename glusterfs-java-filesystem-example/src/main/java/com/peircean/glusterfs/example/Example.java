@@ -29,9 +29,11 @@ public class Example {
     public static void main(String[] args) throws URISyntaxException, IOException {
         System.out.println(getProvider("gluster").toString());
 
+        String mountUri = "gluster://127.0.2.1:foo/";
         String testUri = "gluster://127.0.2.1:foo/baz";
+        Path mountPath = Paths.get(new URI(mountUri));
 
-        FileSystem fileSystem = FileSystems.newFileSystem(new URI(testUri), null);
+        FileSystem fileSystem = FileSystems.newFileSystem(new URI(mountUri), null);
         FileStore store = fileSystem.getFileStores().iterator().next();
         System.out.println("TOTAL SPACE: " + store.getTotalSpace());
         System.out.println("USABLE SPACE: " + store.getUsableSpace());
@@ -40,11 +42,11 @@ public class Example {
 
         String hidden = "/foo/.bar";
         boolean isHidden = fileSystem.provider().isHidden(new GlusterPath(((GlusterFileSystem) fileSystem), hidden));
-        System.out.println("Is "+hidden+" hidden? "+isHidden);
+        System.out.println("Is " + hidden + " hidden? " + isHidden);
 
         hidden = "/foo/bar";
         isHidden = fileSystem.provider().isHidden(new GlusterPath(((GlusterFileSystem) fileSystem), hidden));
-        System.out.println("Is "+hidden+" hidden? "+isHidden);
+        System.out.println("Is " + hidden + " hidden? " + isHidden);
 
         Set<PosixFilePermission> posixFilePermissions = PosixFilePermissions.fromString("rw-rw-rw-");
         FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(posixFilePermissions);
@@ -64,7 +66,8 @@ public class Example {
         Files.write(glusterPath, hello.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
         String world = "world!";
         Files.write(glusterPath, world.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.APPEND);
-        System.out.println("SIZE: " + Files.size(glusterPath));
+        long bazSize = Files.size(glusterPath);
+        System.out.println("SIZE: " + bazSize);
         byte[] readBytes = Files.readAllBytes(glusterPath);
         System.out.println(hello + world + " == " + new String(readBytes));
         System.out.println("Last modified: " + Files.getLastModifiedTime(glusterPath) + " (should be now)");
@@ -73,9 +76,23 @@ public class Example {
         try {
             fileSystem.provider().checkAccess(glusterPath, AccessMode.EXECUTE);
             System.out.println("Uh oh, file is executable, that's bad.");
-        }catch (AccessDeniedException e) {
+        } catch (AccessDeniedException e) {
             System.out.println("Can't execute file, that's good.");
         }
+
+        Path copyPath = glusterPath.resolveSibling("copy");
+//        Files.createFile(copyPath, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-rw-rw-")));
+        Files.copy(glusterPath, copyPath, StandardCopyOption.REPLACE_EXISTING);
+        long copySize = Files.size(copyPath);
+        System.out.println("Source and copy are " + (bazSize == copySize ? "" : "NOT") + " equal.");
+
+        DirectoryStream<Path> stream = Files.newDirectoryStream(mountPath);
+        System.out.println("Mount contents:");
+
+        for (Path p : stream) {
+            System.out.println(p.toString());
+        }
+
         fileSystem.close();
     }
 }

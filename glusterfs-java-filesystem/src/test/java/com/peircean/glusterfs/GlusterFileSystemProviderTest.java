@@ -1,9 +1,9 @@
 package com.peircean.glusterfs;
 
-import junit.framework.TestCase;
 import com.peircean.libgfapi_jni.internal.GLFS;
 import com.peircean.libgfapi_jni.internal.structs.stat;
 import com.peircean.libgfapi_jni.internal.structs.statvfs;
+import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -19,14 +19,15 @@ import java.net.URISyntaxException;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.*;
@@ -35,7 +36,8 @@ import static org.powermock.api.mockito.PowerMockito.*;
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({GLFS.class, GlusterFileSystemProvider.class, GlusterFileChannel.class, GlusterFileAttributes.class})
+@PrepareForTest({GLFS.class, GlusterFileSystemProvider.class, GlusterFileChannel.class, GlusterFileAttributes.class,
+        GlusterDirectoryStream.class})
 public class GlusterFileSystemProviderTest extends TestCase {
 
     public static final String SERVER = "hostname";
@@ -46,6 +48,12 @@ public class GlusterFileSystemProviderTest extends TestCase {
     private GlusterPath mockPath;
     @Mock
     private GlusterFileChannel mockChannel;
+    @Mock
+    private GlusterDirectoryIterator mockIterator;
+    @Mock
+    private GlusterDirectoryStream mockStream;
+    @Mock
+    private DirectoryStream.Filter<? super Path> mockFilter;
     @Spy
     private GlusterFileSystemProvider provider = new GlusterFileSystemProvider();
 
@@ -156,7 +164,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
     @Test(expected = FileSystemNotFoundException.class)
     public void testGetFileSystem_whenNotFound() throws URISyntaxException {
-        provider.getFileSystem(new URI("gluster://foo:bar/baz"));
+        provider.getFileSystem(new URI("gluster://bar:baz/foo"));
     }
 
     @Test
@@ -486,4 +494,37 @@ public class GlusterFileSystemProviderTest extends TestCase {
         assertEquals(buf.f_bsize * buf.f_bfree, unallocatedSpace);
     }
 
+    @Test(expected = FileAlreadyExistsException.class)
+    public void testCopyFile_whenTargetExists() throws IOException {
+        Path targetPath = mockPath.resolveSibling("copy");
+        GlusterFileAttributes attrs = new GlusterFileAttributes(0100777, 123, 456, 123456, 0l, 0l, 0l, 0l);
+        doReturn(attrs).when(provider).readAttributes(targetPath, PosixFileAttributes.class);
+        provider.copy(mockPath, targetPath);
+    }
+
+/*
+    @Test(expected = DirectoryNotEmptyException.class)
+    public void testCopyFile_whenTargetDirNotEmpty() throws IOException {
+        Path targetPath = mockPath.resolveSibling("copy");
+        GlusterFileAttributes attrs = new GlusterFileAttributes(0040777, 123, 456, 123456, 0l, 0l, 0l, 0l);
+        doReturn(attrs).when(provider).readAttributes(targetPath, PosixFileAttributes.class);
+        provider.copy(mockPath, targetPath);
+    }
+*/
+
+    @Test
+    public void testNewDirectoryStream() throws Exception {
+        whenNew(GlusterDirectoryStream.class).withNoArguments().thenReturn(mockStream);
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doNothing().when(mockStream).setFileSystem(mockFileSystem);
+        doNothing().when(mockStream).open(mockPath);
+
+        DirectoryStream<Path> stream = provider.newDirectoryStream(mockPath, mockFilter);
+
+        assertEquals(mockStream, stream);
+        verify(mockStream).setFileSystem(mockFileSystem);
+        verify(mockStream).open(mockPath);
+        verify(mockPath).getFileSystem();
+        verifyNew(GlusterDirectoryStream.class).withNoArguments();
+    }
 }
