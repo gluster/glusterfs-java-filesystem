@@ -19,8 +19,9 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 
 ### TODO:
 
-- Set up travis-ci & coveralls
-- Read directory contents
+- Copy files
+- Set up coveralls (travis-ci already working)
+- Filter directory contents (currently ignores any filter, but it reads!)
 - Watch files for changes
 - Advanced synchronous file I/O   
     Seeking & reading/writing a portion of a file
