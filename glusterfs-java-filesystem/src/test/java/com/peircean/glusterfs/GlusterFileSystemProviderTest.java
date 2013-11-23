@@ -512,6 +512,14 @@ public class GlusterFileSystemProviderTest extends TestCase {
     }
 */
 
+    @Test(expected = NotDirectoryException.class)
+    public void testNewDirectoryStream_whenNotDirectory() throws IOException {
+        mockStatic(Files.class);
+        when(Files.isDirectory(mockPath)).thenReturn(false);
+
+        provider.newDirectoryStream(mockPath, mockFilter);
+    }
+
     @Test
     public void testNewDirectoryStream() throws Exception {
         whenNew(GlusterDirectoryStream.class).withNoArguments().thenReturn(mockStream);

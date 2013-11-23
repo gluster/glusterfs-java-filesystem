@@ -133,6 +133,9 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public DirectoryStream<Path> newDirectoryStream(Path path, DirectoryStream.Filter<? super Path> filter) throws IOException {
+        if (!Files.isDirectory(path)) {
+            throw new NotDirectoryException("Not a directory! " + path.toString());
+        }
         GlusterPath glusterPath = (GlusterPath) path;
         GlusterDirectoryStream stream = new GlusterDirectoryStream();
         stream.setFileSystem(glusterPath.getFileSystem());

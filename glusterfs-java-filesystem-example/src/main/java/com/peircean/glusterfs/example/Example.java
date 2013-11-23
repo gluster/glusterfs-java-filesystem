@@ -86,6 +86,11 @@ public class Example {
         long copySize = Files.size(copyPath);
         System.out.println("Source and copy are " + (bazSize == copySize ? "" : "NOT") + " equal.");
 
+        try {
+            Files.newDirectoryStream(mountPath.resolve("bazzzzz"));
+        } catch (NotDirectoryException e) {
+            System.out.println("Can't list directory of a file, good.");
+        }
         DirectoryStream<Path> stream = Files.newDirectoryStream(mountPath);
         System.out.println("Mount contents:");
 
