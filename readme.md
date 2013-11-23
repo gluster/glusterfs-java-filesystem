@@ -20,12 +20,13 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 ### TODO:
 
 - Copy files
-- Set up coveralls (travis-ci already working)
 - Watch files for changes
 - Advanced synchronous file I/O   
     Seeking & reading/writing a portion of a file
 - Asychronous file I/O
 - Better error reporting & handling
+- Test coverage report
+    Blocked due to use of PowerMock
 
 ### Completed:
 
