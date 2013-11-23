@@ -6,7 +6,5 @@ before_install:
   - sudo apt-get update -qq -y
   - sudo apt-get install glusterfs-common -y
 after_script:  bash catlogs.sh
-after_success:
-  - mvn clean cobertura:cobertura coveralls:cobertura
 notifications:
   email: false
