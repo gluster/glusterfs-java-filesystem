@@ -101,13 +101,7 @@
     <dependencies>
         <dependency>
             <groupId>com.peircean.libgfapi-jni</groupId>
-            <artifactId>libgfapi-jni</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.peircean.libgfapi-jni</groupId>
-            <artifactId>libgfapi-linux64</artifactId>
+            <artifactId>libgfapi-all</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
