@@ -39,7 +39,7 @@ public class GlusterPath implements Path {
             stripped = stripped.substring(1);
         }
         if (stripped.endsWith(fileSystem.getSeparator())) {
-            stripped.substring(0, stripped.length() - 1);
+            stripped = stripped.substring(0, stripped.length() - 1);
         }
         parts = stripped.split(fileSystem.getSeparator());
     }
@@ -153,7 +153,7 @@ public class GlusterPath implements Path {
             return true;
         }
         String[] thisSuffix = Arrays.copyOfRange(parts, parts.length - otherPath.getParts().length, parts.length);
-        return ((false == otherPath.isAbsolute())
+        return ((!otherPath.isAbsolute())
                 && (Arrays.equals(thisSuffix, otherPath.getParts())));
     }
 
