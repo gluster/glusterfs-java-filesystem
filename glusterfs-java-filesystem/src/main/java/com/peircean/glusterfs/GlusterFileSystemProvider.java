@@ -210,7 +210,26 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void move(Path path, Path path2, CopyOption... copyOptions) throws IOException {
-
+        boolean overwrite = false;
+        for (CopyOption co : copyOptions) {
+            if (StandardCopyOption.ATOMIC_MOVE.equals(co)) {
+                throw new AtomicMoveNotSupportedException(path.toString(), path2.toString(), "Atomic move not supported");
+            }
+            if (StandardCopyOption.REPLACE_EXISTING.equals(co)) {
+                overwrite = true;
+            }
+        }
+        boolean exists = Files.exists(path2);
+        if (!overwrite && exists) {
+            throw new FileAlreadyExistsException("Target " + path2 + " exists and REPLACE_EXISTING not specified");
+        } else if (Files.isDirectory(path2) && !directoryIsEmpty(path2)) {
+            throw new DirectoryNotEmptyException("Target not empty: " + path2);
+        }
+        FileSystem fileSystem = path.getFileSystem();
+        if (!fileSystem.equals(path2.getFileSystem())) {
+            throw new UnsupportedOperationException("Can not move file to a different GlusterFS volume");
+        }
+        GLFS.glfs_rename(((GlusterFileSystem) fileSystem).getVolptr(), ((GlusterPath) path).getString(), ((GlusterPath) path2).getString());
     }
 
     @Override

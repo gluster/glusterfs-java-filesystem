@@ -44,6 +44,8 @@ public class GlusterFileSystemProviderTest extends TestCase {
     @Mock
     private GlusterFileSystem mockFileSystem;
     @Mock
+    private GlusterFileSystem differentMockFileSystem;
+    @Mock
     private GlusterPath mockPath;
     @Mock
     private GlusterPath targetPath;
@@ -538,9 +540,10 @@ public class GlusterFileSystemProviderTest extends TestCase {
         doNothing().when(provider).copyFileContent(mockPath, targetPath);
         if (attributes) {
             doNothing().when(provider).copyFileAttributes(mockPath, targetPath);
+            provider.copy(mockPath, targetPath, StandardCopyOption.COPY_ATTRIBUTES);
+        } else {
+            provider.copy(mockPath, targetPath);
         }
-
-        provider.copy(mockPath, targetPath, StandardCopyOption.COPY_ATTRIBUTES);
 
         verify(provider).copyFileContent(mockPath, targetPath);
         if (attributes) {
@@ -550,6 +553,76 @@ public class GlusterFileSystemProviderTest extends TestCase {
         Files.isDirectory(targetPath);
         Files.exists(targetPath);
         Files.createFile(targetPath);
+    }
+
+    @Test(expected = AtomicMoveNotSupportedException.class)
+    public void testMoveFile_whenAtomicMove() throws IOException {
+        CopyOption copyOption = StandardCopyOption.ATOMIC_MOVE;
+        provider.move(mockPath, targetPath, copyOption);
+    }
+
+
+    @Test(expected = FileAlreadyExistsException.class)
+    public void testMoveFile_whenTargetExists_andNoReplaceExisting() throws IOException {
+        Path targetPath = mockPath.resolveSibling("copy");
+        mockStatic(Files.class);
+        when(Files.exists(targetPath)).thenReturn(true);
+        provider.move(mockPath, targetPath);
+    }
+
+    @Test(expected = DirectoryNotEmptyException.class)
+    public void testMoveFile_whenTargetDirNotEmpty_andReplaceExisting() throws IOException {
+        Path targetPath = mockPath.resolveSibling("copy");
+        mockStatic(Files.class);
+        when(Files.isDirectory(targetPath)).thenReturn(true);
+        doReturn(false).when(provider).directoryIsEmpty(targetPath);
+        provider.move(mockPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testMoveFile_whenDifferentFilesystem() throws IOException {
+        mockStatic(Files.class);
+        when(Files.isDirectory(targetPath)).thenReturn(false);
+        when(Files.exists(targetPath)).thenReturn(false);
+
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(differentMockFileSystem).when(targetPath).getFileSystem();
+
+        provider.move(mockPath, targetPath);
+    }
+
+    @Test
+    public void testMoveFile_whenTargetDoesNotExist() throws IOException {
+        GlusterFileSystem mfs = Mockito.mock(GlusterFileSystem.class);
+
+        mockStatic(Files.class);
+        when(Files.isDirectory(targetPath)).thenReturn(false);
+        when(Files.exists(targetPath)).thenReturn(false);
+        String srcPath = "/foo/src";
+        String dstPath = "/foo/dst";
+        doReturn(srcPath).when(mockPath).getString();
+        doReturn(dstPath).when(targetPath).getString();
+
+        doReturn(mfs).when(mockPath).getFileSystem();
+        doReturn(mfs).when(targetPath).getFileSystem();
+
+        long volptr = 12345L;
+        doReturn(volptr).when(mfs).getVolptr();
+        mockStatic(GLFS.class);
+        when(GLFS.glfs_rename(volptr, srcPath, dstPath)).thenReturn(0);
+
+        provider.move(mockPath, targetPath);
+
+        verify(mockPath).getString();
+        verify(targetPath).getString();
+        verify(mockPath).getFileSystem();
+        verify(targetPath).getFileSystem();
+        verify(mfs).getVolptr();
+        verifyStatic();
+        Files.isDirectory(targetPath);
+        Files.exists(targetPath);
+        Files.createFile(targetPath);
+        GLFS.glfs_rename(volptr, srcPath, dstPath);
     }
 
     @Test(expected = NotDirectoryException.class)
