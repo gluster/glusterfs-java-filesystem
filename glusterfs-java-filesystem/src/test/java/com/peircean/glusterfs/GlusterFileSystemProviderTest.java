@@ -521,14 +521,35 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
     @Test
     public void testCopyFile_whenTargetDoesNotExist() throws IOException {
+        helperCopyFile(false);
+    }
+
+    @Test
+    public void testCopyFile_whenTargetDoesNotExist_andCopyAttributes() throws IOException {
+        helperCopyFile(true);
+    }
+
+    void helperCopyFile(boolean attributes) throws IOException {
         Path targetPath = mockPath.resolveSibling("copy");
         mockStatic(Files.class);
         when(Files.isDirectory(targetPath)).thenReturn(false);
-        when(Files.isDirectory(targetPath)).thenReturn(false);
+        when(Files.exists(targetPath)).thenReturn(false);
         when(Files.createFile(targetPath)).thenReturn(targetPath);
+        doNothing().when(provider).copyFileContent(mockPath, targetPath);
+        if (attributes) {
+            doNothing().when(provider).copyFileAttributes(mockPath, targetPath);
+        }
 
-        provider.copy(mockPath, targetPath);
+        provider.copy(mockPath, targetPath, StandardCopyOption.COPY_ATTRIBUTES);
 
+        verify(provider).copyFileContent(mockPath, targetPath);
+        if (attributes) {
+            verify(provider).copyFileAttributes(mockPath, targetPath);
+        }
+        verifyStatic();
+        Files.isDirectory(targetPath);
+        Files.exists(targetPath);
+        Files.createFile(targetPath);
     }
 
     @Test(expected = NotDirectoryException.class)

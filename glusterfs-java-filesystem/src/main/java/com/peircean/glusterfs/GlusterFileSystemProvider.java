@@ -169,6 +169,7 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     @Override
     public void copy(Path path, Path path2, CopyOption... copyOptions) throws IOException {
         boolean overwrite = false;
+        boolean copyAttributes = false;
         for (CopyOption co : copyOptions) {
             if (StandardCopyOption.ATOMIC_MOVE.equals(co)) {
                 throw new UnsupportedOperationException("Atomic move not supported");
@@ -176,12 +177,31 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
             if (StandardCopyOption.REPLACE_EXISTING.equals(co)) {
                 overwrite = true;
             }
+            if (StandardCopyOption.COPY_ATTRIBUTES.equals(co)) {
+                copyAttributes = true;
+            }
         }
-        if (!overwrite && Files.exists(path2)) {
+        boolean exists = Files.exists(path2);
+        if (!overwrite && exists) {
             throw new FileAlreadyExistsException("Target " + path2 + " exists and REPLACE_EXISTING not specified");
         } else if (Files.isDirectory(path2) && !directoryIsEmpty(path2)) {
             throw new DirectoryNotEmptyException("Target not empty: " + path2);
         }
+        if (!exists) {
+            Files.createFile(path2);
+        }
+        copyFileContent(path, path2);
+        if (copyAttributes) {
+            copyFileAttributes(path, path2);
+        }
+    }
+
+    void copyFileAttributes(Path path, Path path2) {
+
+    }
+
+    void copyFileContent(Path path, Path path2) {
+
     }
 
     boolean directoryIsEmpty(Path path) {
