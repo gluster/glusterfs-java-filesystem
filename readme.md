@@ -19,6 +19,7 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 
 ### TODO:
 
+- Delete files
 - Copy files
 - Watch files for changes
 - Advanced synchronous file I/O   
@@ -40,6 +41,7 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 - Filesystem/volume stats   
     See the total, free, and usable bytes in a volume
 - Directory listing (with filtering)
+- Move/rename files
 
 # Project License
 
