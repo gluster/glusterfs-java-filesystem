@@ -11,7 +11,10 @@ import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
-import java.nio.file.attribute.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
@@ -165,26 +168,23 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void copy(Path path, Path path2, CopyOption... copyOptions) throws IOException {
-        try {
-            PosixFileAttributes attrs = readAttributes(path2, PosixFileAttributes.class);
-            boolean overwrite = false;
-            for (CopyOption co : copyOptions) {
-                if (StandardCopyOption.REPLACE_EXISTING.equals(co)) {
-                    overwrite = true;
-                    if (attrs.isDirectory() && !directoryIsEmpty(path2)) {
-                        throw new DirectoryNotEmptyException("Target not empty: " + path2);
-                    }
-                }
+        boolean overwrite = false;
+        for (CopyOption co : copyOptions) {
+            if (StandardCopyOption.ATOMIC_MOVE.equals(co)) {
+                throw new UnsupportedOperationException("Atomic move not supported");
             }
-            if (!overwrite) {
-                throw new FileAlreadyExistsException("Target exists: " + path2);
+            if (StandardCopyOption.REPLACE_EXISTING.equals(co)) {
+                overwrite = true;
             }
-        } catch (NoSuchFileException e) {
-
+        }
+        if (!overwrite && Files.exists(path2)) {
+            throw new FileAlreadyExistsException("Target " + path2 + " exists and REPLACE_EXISTING not specified");
+        } else if (Files.isDirectory(path2) && !directoryIsEmpty(path2)) {
+            throw new DirectoryNotEmptyException("Target not empty: " + path2);
         }
     }
 
-    private boolean directoryIsEmpty(Path path) {
+    boolean directoryIsEmpty(Path path) {
         return false;  //To change body of created methods use File | Settings | File Templates.
     }
 

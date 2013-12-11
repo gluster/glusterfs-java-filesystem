@@ -21,7 +21,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,6 +45,8 @@ public class GlusterFileSystemProviderTest extends TestCase {
     private GlusterFileSystem mockFileSystem;
     @Mock
     private GlusterPath mockPath;
+    @Mock
+    private GlusterPath targetPath;
     @Mock
     private GlusterFileChannel mockChannel;
     @Mock
@@ -494,23 +495,41 @@ public class GlusterFileSystemProviderTest extends TestCase {
         assertEquals(buf.f_bsize * buf.f_bfree, unallocatedSpace);
     }
 
+    @Test(expected = UnsupportedOperationException.class)
+    public void testCopyFile_whenUnsupportedOption() throws IOException {
+        CopyOption copyOption = StandardCopyOption.ATOMIC_MOVE;
+        provider.copy(mockPath, targetPath, copyOption);
+    }
+
+
     @Test(expected = FileAlreadyExistsException.class)
-    public void testCopyFile_whenTargetExists() throws IOException {
+    public void testCopyFile_whenTargetExists_andNoReplaceExisting() throws IOException {
         Path targetPath = mockPath.resolveSibling("copy");
-        GlusterFileAttributes attrs = new GlusterFileAttributes(0100777, 123, 456, 123456, 0l, 0l, 0l, 0l);
-        doReturn(attrs).when(provider).readAttributes(targetPath, PosixFileAttributes.class);
+        mockStatic(Files.class);
+        when(Files.exists(targetPath)).thenReturn(true);
         provider.copy(mockPath, targetPath);
     }
 
-/*
     @Test(expected = DirectoryNotEmptyException.class)
-    public void testCopyFile_whenTargetDirNotEmpty() throws IOException {
+    public void testCopyFile_whenTargetDirNotEmpty_andReplaceExisting() throws IOException {
         Path targetPath = mockPath.resolveSibling("copy");
-        GlusterFileAttributes attrs = new GlusterFileAttributes(0040777, 123, 456, 123456, 0l, 0l, 0l, 0l);
-        doReturn(attrs).when(provider).readAttributes(targetPath, PosixFileAttributes.class);
-        provider.copy(mockPath, targetPath);
+        mockStatic(Files.class);
+        when(Files.isDirectory(targetPath)).thenReturn(true);
+        doReturn(false).when(provider).directoryIsEmpty(targetPath);
+        provider.copy(mockPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
     }
-*/
+
+    @Test
+    public void testCopyFile_whenTargetDoesNotExist() throws IOException {
+        Path targetPath = mockPath.resolveSibling("copy");
+        mockStatic(Files.class);
+        when(Files.isDirectory(targetPath)).thenReturn(false);
+        when(Files.isDirectory(targetPath)).thenReturn(false);
+        when(Files.createFile(targetPath)).thenReturn(targetPath);
+
+        provider.copy(mockPath, targetPath);
+
+    }
 
     @Test(expected = NotDirectoryException.class)
     public void testNewDirectoryStream_whenNotDirectory() throws IOException {
