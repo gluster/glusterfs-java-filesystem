@@ -1,9 +1,9 @@
 package com.peircean.glusterfs;
 
-import junit.framework.TestCase;
 import com.peircean.libgfapi_jni.internal.GLFS;
 import com.peircean.libgfapi_jni.internal.GlusterOpenOption;
 import com.peircean.libgfapi_jni.internal.structs.stat;
+import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -18,7 +18,9 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.channels.NonReadableChannelException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
@@ -149,19 +151,17 @@ public class GlusterFileChannelTest extends TestCase {
         assertEquals(0777, mode);
     }
 
-    @Test(expected = ClosedChannelException.class)
-    public void testRead1Arg_whenClosed() throws IOException {
-        channel.setClosed(true);
-        channel.read(mockBuffer);
-    }
-
     @Test
     public void testRead1Arg() throws IOException {
+        doNothing().when(channel).guardClosed();
+        doNothing().when(channel).guardReadable();
         long fileptr = 1234l;
         channel.setFileptr(fileptr);
 
         byte[] bytes = new byte[]{'a', 'b', 'c'};
         long bufferLength = bytes.length;
+        long offset = 4;
+        channel.setPosition(offset);
 
         PowerMockito.mockStatic(GLFS.class);
         when(GLFS.glfs_read(fileptr, bytes, bufferLength, 0)).thenReturn(bufferLength);
@@ -172,20 +172,18 @@ public class GlusterFileChannelTest extends TestCase {
 
         assertEquals(bufferLength, read);
 
+        verify(channel).guardClosed();
+        verify(channel).guardReadable();
         verify(mockBuffer).array();
+        assertEquals(bufferLength + offset, channel.getPosition());
 
         PowerMockito.verifyStatic();
         GLFS.glfs_read(fileptr, bytes, bufferLength, 0);
     }
 
-    @Test(expected = ClosedChannelException.class)
-    public void testWrite1Arg_whenClosed() throws IOException {
-        channel.setClosed(true);
-        channel.write(mockBuffer);
-    }
-
     @Test
     public void testWrite1Arg() throws IOException {
+        doNothing().when(channel).guardClosed();
         long fileptr = 1234l;
         channel.setFileptr(fileptr);
 
@@ -202,6 +200,7 @@ public class GlusterFileChannelTest extends TestCase {
 
         assertEquals(bufferLength, written);
 
+        verify(channel).guardClosed();
         verify(mockBuffer).array();
         verify(mockBuffer).position(bufferLength);
 
@@ -209,25 +208,40 @@ public class GlusterFileChannelTest extends TestCase {
         GLFS.glfs_write(fileptr, bytes, bufferLength, 0);
     }
 
+    @Test
+    public void testGuardClosed_whenNotClosed() throws ClosedChannelException {
+        channel.setClosed(false);
+        channel.guardClosed();
+    }
+
     @Test(expected = ClosedChannelException.class)
-    public void testGetPosition_whenClosed() throws IOException {
+    public void testGuardClosed_whenClosed() throws ClosedChannelException {
         channel.setClosed(true);
-        channel.position();
+        channel.guardClosed();
+    }
+
+    @Test(expected = NonReadableChannelException.class)
+    public void testGuardReadable_whenNotReadable() {
+        channel.guardReadable();
+    }
+
+    @Test
+    public void testGuardReadable_whenReadable() {
+        Set<OpenOption> openOptions = new HashSet<>();
+        openOptions.add(StandardOpenOption.READ);
+        channel.setOptions(openOptions);
+
+        channel.guardReadable();
     }
 
     @Test
     public void testGetPosition() throws IOException {
+        doNothing().when(channel).guardClosed();
         long position = 12345l;
         channel.setPosition(position);
         long returnedPosition = channel.position();
+        verify(channel).guardClosed();
         assertEquals(position, returnedPosition);
-    }
-
-    @Test(expected = ClosedChannelException.class)
-    public void testSetPosition_whenClosed() throws IOException {
-        channel.setClosed(true);
-        long position = 12l;
-        channel.position(position);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -238,6 +252,7 @@ public class GlusterFileChannelTest extends TestCase {
 
     @Test
     public void testSetPosition() throws IOException {
+        doNothing().when(channel).guardClosed();
         long fileptr = 123l;
         channel.setFileptr(fileptr);
         long position = 12345l;
@@ -246,17 +261,12 @@ public class GlusterFileChannelTest extends TestCase {
         when(GLFS.glfs_lseek(fileptr, position, 0)).thenReturn(0);
         FileChannel returnedChannel = channel.position(position);
 
+        verify(channel).guardClosed();
         assertEquals(channel, returnedChannel);
         assertEquals(position, channel.getPosition());
 
         PowerMockito.verifyStatic();
         GLFS.glfs_lseek(fileptr, position, 0);
-    }
-    
-    @Test(expected = ClosedChannelException.class)
-    public void testForce_whenClosed() throws IOException {
-        channel.setClosed(true);
-        channel.force(true);
     }
     
     @Test(expected = IOException.class)
@@ -272,6 +282,7 @@ public class GlusterFileChannelTest extends TestCase {
     
     @Test
     public void testForce() throws IOException {
+        doNothing().when(channel).guardClosed();
         long fileptr = 1234l;
         channel.setFileptr(fileptr);
 
@@ -279,6 +290,7 @@ public class GlusterFileChannelTest extends TestCase {
         when(GLFS.glfs_fsync(fileptr)).thenReturn(0);
 
         channel.force(true);
+        verify(channel).guardClosed();
         PowerMockito.verifyStatic();
         GLFS.glfs_fsync(fileptr);
     }

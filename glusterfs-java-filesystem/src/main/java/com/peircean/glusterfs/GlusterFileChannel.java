@@ -1,11 +1,11 @@
 package com.peircean.glusterfs;
 
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import com.peircean.libgfapi_jni.internal.GLFS;
 import com.peircean.libgfapi_jni.internal.GlusterOpenOption;
 import com.peircean.libgfapi_jni.internal.structs.stat;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -18,6 +18,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,7 +53,7 @@ public class GlusterFileChannel extends FileChannel {
 
     private GlusterFileSystem fileSystem;
     private GlusterPath path;
-    private Set<? extends OpenOption> options;
+    private Set<? extends OpenOption> options = new HashSet<>();
     private FileAttribute<?> attrs[] = null;
     private long fileptr;
     private long position;
@@ -114,8 +115,10 @@ public class GlusterFileChannel extends FileChannel {
     @Override
     public int read(ByteBuffer byteBuffer) throws IOException {
         guardClosed();
+        guardReadable();
         byte[] bytes = byteBuffer.array();
         long read = GLFS.glfs_read(fileptr, bytes, bytes.length, 0);
+        position += read;
         return (int) read;
     }
 
@@ -156,10 +159,19 @@ public class GlusterFileChannel extends FileChannel {
         return this;
     }
 
-    private void guardClosed() throws ClosedChannelException {
+    void guardClosed() throws ClosedChannelException {
         if (closed) {
             throw new ClosedChannelException();
         }
+    }
+
+    void guardReadable() {
+        for (OpenOption o : options) {
+            if (StandardOpenOption.READ.equals(o)) {
+                return;
+            }
+        }
+        throw new NonReadableChannelException();
     }
 
     @Override
