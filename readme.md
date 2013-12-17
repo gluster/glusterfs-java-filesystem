@@ -20,13 +20,15 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 ### TODO:
 
 - Delete files
+- Fix/finish read/write (support position/seek better)
+- Fix/finish attribute support
 - Copy files
 - Watch files for changes
-- Advanced synchronous file I/O   
+- Advanced synchronous file I/O      
     Seeking & reading/writing a portion of a file
 - Asychronous file I/O
 - Better error reporting & handling
-- Test coverage report
+- Test coverage report   
     Blocked due to use of PowerMock
 
 ### Completed:
@@ -36,7 +38,7 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
     Read the contents of a file all at once   
     Write a chunk of bytes to a file all at once
 - File attributes   
-    See & set owner, permissions, and last modified timestamp on files and directories   
+    See & set owner, permissions, and last modified timestamp on files and directories      
     See file size
 - Filesystem/volume stats   
     See the total, free, and usable bytes in a volume
