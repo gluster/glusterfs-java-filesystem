@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
 
 @Data
 public class GlusterWatchService implements WatchService {
-    public static final int MILLIS_PER_DAY = 86400000;
-    public static final int MILLIS_PER_HOUR = 3600000;
-    public static final int MILLIS_PER_MINUTE = 60000;
     public static final int MILLIS_PER_SECOND = 1000;
+    public static final int MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
+    public static final int MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
+    public static final int MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
     public static long PERIOD = 100L;
 
     static long timeoutToMillis(long timeout, TimeUnit unit) {
