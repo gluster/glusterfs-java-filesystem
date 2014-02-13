@@ -120,8 +120,12 @@ public class Example {
         stream = Files.newDirectoryStream(mountPath);
         System.out.println("Mount contents:");
 
+        PathMatcher matcher = fileSystem.getPathMatcher("glob:**/*z");
         for (Path p : stream) {
             System.out.println(p.toString());
+            if (matcher.matches(p)) {
+                System.out.println(" **** MATCH ****");
+            }
         }
 
         fileSystem.close();

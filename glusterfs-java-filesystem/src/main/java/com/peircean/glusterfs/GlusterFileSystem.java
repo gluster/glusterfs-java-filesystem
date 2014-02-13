@@ -1,5 +1,6 @@
 package com.peircean.glusterfs;
 
+import com.peircean.glusterfs.borrowed.GlobPattern;
 import lombok.*;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
@@ -100,7 +102,20 @@ public class GlusterFileSystem extends FileSystem {
 
     @Override
     public PathMatcher getPathMatcher(String s) {
-        throw new UnsupportedOperationException();
+        if (!s.contains(":")) {
+            throw new IllegalArgumentException("PathMatcher requires input syntax:expression");
+        }
+        String[] parts = s.split(":", 2);
+        Pattern pattern;
+        if ("glob".equals(parts[0])) {
+            pattern = GlobPattern.compile(parts[1]);
+        } else if ("regex".equals(parts[0])) {
+            pattern = Pattern.compile(parts[1]);
+        } else {
+            throw new UnsupportedOperationException("Unknown PathMatcher syntax: " + parts[0]);
+        }
+
+        return new GlusterPathMatcher(pattern);
     }
 
     @Override
@@ -117,3 +132,4 @@ public class GlusterFileSystem extends FileSystem {
         return provider.getScheme() + "://" + host + ":" + volname;
     }
 }
+
