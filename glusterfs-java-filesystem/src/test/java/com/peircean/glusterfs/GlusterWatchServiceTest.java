@@ -3,14 +3,24 @@ package com.peircean.glusterfs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Spy;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.nio.file.ClosedWatchServiceException;
+import java.nio.file.WatchKey;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({GlusterWatchService.class, Thread.class})
 public class GlusterWatchServiceTest {
+
+    @Spy
+    GlusterWatchService watchService = new GlusterWatchService();
 
     @Test
     public void testRegisterPath() {
@@ -27,32 +37,80 @@ public class GlusterWatchServiceTest {
 
     }
 
-    @Test
-    public void testPollTimeout() {
-
+    @Test(expected = ClosedWatchServiceException.class)
+    public void testPollTimeout_whenClosed() {
+        long timeout = 150L;
+        TimeUnit unit = TimeUnit.MILLISECONDS;
+        doReturn(timeout).when(watchService).timeoutToMillis(timeout, unit);
+        watchService.setRunning(false);
+        watchService.poll(timeout, unit);
     }
 
     @Test
-    public void testTake() {
+    public void testPollTimeout() throws InterruptedException {
+        long timeout = 150L;
+        TimeUnit unit = TimeUnit.MILLISECONDS;
+        doReturn(timeout).when(watchService).timeoutToMillis(timeout, unit);
 
+        WatchKey mockKey = mock(WatchKey.class);
+        PowerMockito.when(watchService.poll()).thenReturn(null).thenReturn(mockKey);
+
+        PowerMockito.spy(Thread.class);
+        PowerMockito.doThrow(new InterruptedException()).when(Thread.class);
+        Thread.sleep(GlusterWatchService.PERIOD);
+
+        WatchKey key = watchService.poll(timeout, unit);
+
+        assertEquals(mockKey, key);
+
+        verify(watchService, times(2)).poll();
+        verify(watchService).timeoutToMillis(timeout, unit);
+
+        PowerMockito.verifyStatic();
+        Thread.sleep(GlusterWatchService.PERIOD);
+    }
+
+    @Test(expected = ClosedWatchServiceException.class)
+    public void testTake_whenClosed() {
+        watchService.setRunning(false);
+        watchService.take();
+    }
+
+    @Test
+    public void testTake() throws Exception {
+        WatchKey mockKey = mock(WatchKey.class);
+        PowerMockito.when(watchService.poll()).thenReturn(null).thenReturn(mockKey);
+
+        PowerMockito.spy(Thread.class);
+        PowerMockito.doThrow(new InterruptedException()).when(Thread.class);
+        Thread.sleep(GlusterWatchService.PERIOD);
+
+        WatchKey key = watchService.take();
+
+        assertEquals(mockKey, key);
+
+        verify(watchService, times(2)).poll();
+
+        PowerMockito.verifyStatic();
+        Thread.sleep(GlusterWatchService.PERIOD);
     }
 
     @Test
     public void testTimeoutToMillis() {
         long time = 12345L;
         Assert.assertEquals(-1,
-                GlusterWatchService.timeoutToMillis(time, TimeUnit.NANOSECONDS));
+                watchService.timeoutToMillis(time, TimeUnit.NANOSECONDS));
         Assert.assertEquals(-1,
-                GlusterWatchService.timeoutToMillis(time, TimeUnit.MICROSECONDS));
+                watchService.timeoutToMillis(time, TimeUnit.MICROSECONDS));
         Assert.assertEquals(time,
-                GlusterWatchService.timeoutToMillis(time, TimeUnit.MILLISECONDS));
+                watchService.timeoutToMillis(time, TimeUnit.MILLISECONDS));
         Assert.assertEquals(time * GlusterWatchService.MILLIS_PER_SECOND,
-                GlusterWatchService.timeoutToMillis(time, TimeUnit.SECONDS));
+                watchService.timeoutToMillis(time, TimeUnit.SECONDS));
         Assert.assertEquals(time * GlusterWatchService.MILLIS_PER_MINUTE,
-                GlusterWatchService.timeoutToMillis(time, TimeUnit.MINUTES));
+                watchService.timeoutToMillis(time, TimeUnit.MINUTES));
         Assert.assertEquals(time * GlusterWatchService.MILLIS_PER_HOUR,
-                GlusterWatchService.timeoutToMillis(time, TimeUnit.HOURS));
+                watchService.timeoutToMillis(time, TimeUnit.HOURS));
         Assert.assertEquals(time * GlusterWatchService.MILLIS_PER_DAY,
-                GlusterWatchService.timeoutToMillis(time, TimeUnit.DAYS));
+                watchService.timeoutToMillis(time, TimeUnit.DAYS));
     }
 }
