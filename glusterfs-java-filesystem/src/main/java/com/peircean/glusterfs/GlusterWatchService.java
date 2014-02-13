@@ -18,6 +18,23 @@ public class GlusterWatchService implements WatchService {
     public static final int MILLIS_PER_SECOND = 1000;
     public static long PERIOD = 100L;
 
+    static long timeoutToMillis(long timeout, TimeUnit unit) {
+        switch (unit) {
+            case DAYS:
+                return (timeout * MILLIS_PER_DAY);
+            case HOURS:
+                return (timeout * MILLIS_PER_HOUR);
+            case MINUTES:
+                return (timeout * MILLIS_PER_MINUTE);
+            case SECONDS:
+                return (timeout * MILLIS_PER_SECOND);
+            case MILLISECONDS:
+                return timeout;
+            default: //MICROS & NANOS
+                return -1;
+        }
+    }
+
     private Map<GlusterPath, WatchKey> paths = new HashMap<>();
     private boolean running = true;
 
@@ -59,23 +76,6 @@ public class GlusterWatchService implements WatchService {
             }
         }
         throw new ClosedWatchServiceException();
-    }
-
-    long timeoutToMillis(long timeout, TimeUnit unit) {
-        switch (unit) {
-            case DAYS:
-                return (timeout * MILLIS_PER_DAY);
-            case HOURS:
-                return (timeout * MILLIS_PER_HOUR);
-            case MINUTES:
-                return (timeout * MILLIS_PER_MINUTE);
-            case SECONDS:
-                return (timeout * MILLIS_PER_SECOND);
-            case MILLISECONDS:
-                return timeout;
-            default: //MICROS & NANOS
-                return -1;
-        }
     }
 
     @Override
