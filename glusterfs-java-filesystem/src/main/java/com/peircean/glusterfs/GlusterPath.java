@@ -272,12 +272,30 @@ public class GlusterPath implements Path {
 
     @Override
     public WatchKey register(WatchService watchService, WatchEvent.Kind<?>[] kinds, WatchEvent.Modifier... modifiers) throws IOException {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("GlusterWatchService does not support modifiers at this time.");
     }
 
     @Override
     public WatchKey register(WatchService watchService, WatchEvent.Kind<?>... kinds) throws IOException {
-        throw new UnsupportedOperationException();
+        guardRegisterWatchService(watchService);
+        guardRegisterWatchEvents(kinds);
+
+        return ((GlusterWatchService) watchService).registerPath(this);
+    }
+
+    void guardRegisterWatchEvents(WatchEvent.Kind<?>[] kinds) {
+        for (WatchEvent.Kind k : kinds) {
+            if (!StandardWatchEventKinds.ENTRY_MODIFY.name().equals(k.name())) {
+                throw new UnsupportedOperationException("GlusterWatchService only supports ENTRY_MODIFY.  Given: " + k);
+            }
+        }
+    }
+
+    void guardRegisterWatchService(WatchService watchService) {
+        Class<? extends WatchService> watchServiceClass = watchService.getClass();
+        if (!GlusterWatchService.class.equals(watchServiceClass)) {
+            throw new UnsupportedOperationException("GlusterPaths can only be watched by GlusterWatchServices. WatchService given: " + watchServiceClass);
+        }
     }
 
     @Override

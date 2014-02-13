@@ -7,11 +7,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -493,4 +492,66 @@ public class GlusterPathTest extends TestCase {
         GlusterPath path = new GlusterPath(mockFileSystem, new String[]{"a", "b"}, false);
         assertEquals("a/b", path.getString());
     }
+
+    @Test
+    public void testRegisterWatchService() throws IOException {
+        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
+        GlusterWatchService mockWatchService = spy(new GlusterWatchService());
+        doNothing().when(path).guardRegisterWatchService(mockWatchService);
+
+        WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_MODIFY};
+        doNothing().when(path).guardRegisterWatchEvents(kinds);
+
+        WatchKey mockKey = mock(WatchKey.class);
+        doReturn(mockKey).when(mockWatchService).registerPath(path);
+
+        WatchKey watchKey = path.register(mockWatchService, kinds);
+
+        assertEquals(mockKey, watchKey);
+
+        verify(path).guardRegisterWatchService(mockWatchService);
+        verify(path).guardRegisterWatchEvents(kinds);
+        verify(mockWatchService).registerPath(path);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testGuardRegisterWatchService() {
+        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
+        WatchService mockWatchService = mock(WatchService.class);
+
+        path.guardRegisterWatchService(mockWatchService);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testGuardRegisterWatchEvents() {
+        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
+        WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_CREATE};
+
+        path.guardRegisterWatchEvents(kinds);
+    }
+
+    @Test
+    public void testGuardRegisterWatchEvents_whenModify() {
+        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
+        WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_MODIFY};
+
+        path.guardRegisterWatchEvents(kinds);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testGuardRegisterWatchEvents_whenDelete() {
+        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
+        WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_DELETE};
+
+        path.guardRegisterWatchEvents(kinds);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testGuardRegisterWatchEvents_whenOverflow() {
+        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
+        WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.OVERFLOW};
+
+        path.guardRegisterWatchEvents(kinds);
+    }
 }
+
