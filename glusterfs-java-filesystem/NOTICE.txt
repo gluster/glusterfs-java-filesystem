@@ -1,0 +1,6 @@
+This product includes software developed by The Apache Software
+Foundation (http://www.apache.org/).
+
+[ src/main/java/com/peircean/glusterfs/borrowed/GlobPattern.java:
+Trivial changes only.  See comments in top of that file for details.
+-Louis Zuckerman ]
