@@ -502,6 +502,8 @@ public class GlusterPathTest extends TestCase {
         WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_MODIFY};
         doNothing().when(path).guardRegisterWatchEvents(kinds);
 
+        doNothing().when(path).guardRegisterWatchDirectory();
+
         WatchKey mockKey = mock(WatchKey.class);
         doReturn(mockKey).when(mockWatchService).registerPath(path);
 
@@ -511,6 +513,7 @@ public class GlusterPathTest extends TestCase {
 
         verify(path).guardRegisterWatchService(mockWatchService);
         verify(path).guardRegisterWatchEvents(kinds);
+        verify(path).guardRegisterWatchDirectory();
         verify(mockWatchService).registerPath(path);
     }
 

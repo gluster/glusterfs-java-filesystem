@@ -279,8 +279,15 @@ public class GlusterPath implements Path {
     public WatchKey register(WatchService watchService, WatchEvent.Kind<?>... kinds) throws IOException {
         guardRegisterWatchService(watchService);
         guardRegisterWatchEvents(kinds);
+        guardRegisterWatchDirectory();
 
         return ((GlusterWatchService) watchService).registerPath(this);
+    }
+
+    void guardRegisterWatchDirectory() throws NotDirectoryException {
+        if (!Files.isDirectory(this)) {
+            throw new NotDirectoryException("GlusterWatchService can only watch directories.  Not a directory: " + this);
+        }
     }
 
     void guardRegisterWatchEvents(WatchEvent.Kind<?>[] kinds) {
