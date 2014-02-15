@@ -500,7 +500,6 @@ public class GlusterPathTest extends TestCase {
         doNothing().when(path).guardRegisterWatchService(mockWatchService);
 
         WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_MODIFY};
-        doNothing().when(path).guardRegisterWatchEvents(kinds);
 
         doNothing().when(path).guardRegisterWatchDirectory();
 
@@ -512,7 +511,6 @@ public class GlusterPathTest extends TestCase {
         assertEquals(mockKey, watchKey);
 
         verify(path).guardRegisterWatchService(mockWatchService);
-        verify(path).guardRegisterWatchEvents(kinds);
         verify(path).guardRegisterWatchDirectory();
         verify(mockWatchService).registerPath(path);
     }
@@ -525,36 +523,5 @@ public class GlusterPathTest extends TestCase {
         path.guardRegisterWatchService(mockWatchService);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
-    public void testGuardRegisterWatchEvents() {
-        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
-        WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_CREATE};
-
-        path.guardRegisterWatchEvents(kinds);
-    }
-
-    @Test
-    public void testGuardRegisterWatchEvents_whenModify() {
-        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
-        WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_MODIFY};
-
-        path.guardRegisterWatchEvents(kinds);
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testGuardRegisterWatchEvents_whenDelete() {
-        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
-        WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_DELETE};
-
-        path.guardRegisterWatchEvents(kinds);
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testGuardRegisterWatchEvents_whenOverflow() {
-        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
-        WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.OVERFLOW};
-
-        path.guardRegisterWatchEvents(kinds);
-    }
 }
 

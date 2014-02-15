@@ -4,10 +4,13 @@ import lombok.Data;
 
 import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
+import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Data
@@ -18,26 +21,58 @@ public class GlusterWatchService implements WatchService {
     public static final int MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
     public static long PERIOD = 100L;
 
-    private Map<GlusterPath, WatchKey> paths = new HashMap<>();
+    private Set<GlusterWatchKey> paths = new HashSet<>();
+    private Set<GlusterWatchKey> pendingPaths = new HashSet<>();
     private boolean running = true;
 
-    public WatchKey registerPath(GlusterPath path) {
+    public WatchKey registerPath(GlusterPath path, WatchEvent.Kind... kinds) {
         if (!running) {
             throw new ClosedWatchServiceException();
         }
-        //Put a new WatchKey into the map under this path
-        throw new UnsupportedOperationException();
+        for (GlusterWatchKey k : paths) {
+            if (k.getPath().equals(path)) {
+                k.setKinds(kinds);
+                return k;
+            }
+        }
+        GlusterWatchKey key = new GlusterWatchKey(path, kinds);
+        paths.add(key);
+        return key;
     }
 
     @Override
     public void close() throws IOException {
-        running = false;
+        if (running) {
+            running = false;
+            for (GlusterWatchKey k : paths) {
+                k.cancel();
+            }
+        }
     }
 
+    WatchKey popPending() {
+        Iterator<GlusterWatchKey> iterator = pendingPaths.iterator();
+        try {
+            GlusterWatchKey key = iterator.next();
+            iterator.remove();
+            return key;
+        } catch (NoSuchElementException e) {
+            return null;
+        }
+    }
+    
     @Override
     public WatchKey poll() {
-        // Find directory entries modified since last call
-        return null;
+        WatchKey pending = popPending();
+        if (null != pending) {
+            return pending;
+        }
+        for (GlusterWatchKey k : paths) {
+            if (k.isValid() && k.update()) {
+                pendingPaths.add(k);
+            }
+        }
+        return popPending();
     }
 
     @Override
