@@ -63,12 +63,15 @@ public class GlusterWatchService implements WatchService {
     
     @Override
     public WatchKey poll() {
+        if (!running) {
+            throw new ClosedWatchServiceException();
+        }
         WatchKey pending = popPending();
         if (null != pending) {
             return pending;
         }
         for (GlusterWatchKey k : paths) {
-            if (k.isValid() && k.update()) {
+            if (k.isValid() && k.isReady() && k.update()) {
                 pendingPaths.add(k);
             }
         }
@@ -78,7 +81,7 @@ public class GlusterWatchService implements WatchService {
     @Override
     public WatchKey poll(long timeout, TimeUnit unit) {
         long timeoutMillis = timeoutToMillis(timeout, unit);
-        long runs = 0;
+        long runs = 2;
         while (running) {
             WatchKey key = poll();
             if (key != null) {

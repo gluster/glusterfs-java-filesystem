@@ -495,8 +495,8 @@ public class GlusterPathTest extends TestCase {
 
     @Test
     public void testRegisterWatchService() throws IOException {
-        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{}, false));
-        GlusterWatchService mockWatchService = spy(new GlusterWatchService());
+        GlusterPath path = spy(new GlusterPath(mockFileSystem, new String[]{"foo", "bar"}, true));
+        GlusterWatchService mockWatchService = mock(GlusterWatchService.class);
         doNothing().when(path).guardRegisterWatchService(mockWatchService);
 
         WatchEvent.Kind[] kinds = new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_MODIFY};
@@ -504,7 +504,7 @@ public class GlusterPathTest extends TestCase {
         doNothing().when(path).guardRegisterWatchDirectory();
 
         WatchKey mockKey = mock(WatchKey.class);
-        doReturn(mockKey).when(mockWatchService).registerPath(path);
+        doReturn(mockKey).when(mockWatchService).registerPath(path, kinds);
 
         WatchKey watchKey = path.register(mockWatchService, kinds);
 
@@ -512,7 +512,7 @@ public class GlusterPathTest extends TestCase {
 
         verify(path).guardRegisterWatchService(mockWatchService);
         verify(path).guardRegisterWatchDirectory();
-        verify(mockWatchService).registerPath(path);
+        verify(mockWatchService).registerPath(path, kinds);
     }
 
     @Test(expected = UnsupportedOperationException.class)

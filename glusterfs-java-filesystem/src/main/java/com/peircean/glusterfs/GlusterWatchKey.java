@@ -45,7 +45,9 @@ public class GlusterWatchKey implements WatchKey {
                         event = new GlusterWatchEvent(f);
                         event.setLastModified(lastModified);
                         events.put(f, event);
-                        newEvents = true;
+                        if (lastModified > lastPolled) {
+                            newEvents = true;
+                        }
                     }
                 }
             }

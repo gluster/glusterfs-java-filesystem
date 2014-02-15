@@ -125,7 +125,7 @@ public class GlusterFileSystem extends FileSystem {
 
     @Override
     public WatchService newWatchService() throws IOException {
-        throw new UnsupportedOperationException();
+        return new GlusterWatchService();
     }
 
     public String toString() {
