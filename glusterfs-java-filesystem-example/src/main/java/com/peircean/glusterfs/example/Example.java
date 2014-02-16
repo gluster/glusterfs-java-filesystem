@@ -11,6 +11,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -26,7 +27,7 @@ public class Example {
         throw new IllegalArgumentException("No provider found for scheme: " + scheme);
     }
 
-    public static void main(String[] args) throws URISyntaxException, IOException {
+    public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
         System.out.println(getProvider("gluster").toString());
 
         String mountUri = "gluster://127.0.2.1:foo/";
@@ -126,6 +127,33 @@ public class Example {
             if (matcher.matches(p)) {
                 System.out.println(" **** MATCH ****");
             }
+        }
+
+        stream = Files.newDirectoryStream(mountPath, "*z");
+        System.out.println("Mount contents:");
+
+        for (Path p : stream) {
+            System.out.println(p.toString());
+        }
+
+        WatchService watchService = fileSystem.newWatchService();
+        Path one = Paths.get(new URI("gluster://localhost:foo/one"));
+
+        System.out.println("STARTSWITH empty: " + one.startsWith("/"));
+        one.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+        for (int i = 0; i < 10; i++) {
+            WatchKey take = watchService.take();
+            List<WatchEvent<?>> events = take.pollEvents();
+            for (WatchEvent e : events) {
+                Path path = (Path) e.context();
+                Path absolutePath = one.resolve(path).toAbsolutePath();
+                boolean exists = Files.exists(absolutePath);
+                System.out.println("EXISTS? " + exists);
+                System.out.println(Files.size(absolutePath));
+                System.out.println(absolutePath);
+                System.out.println(e.toString());
+            }
+            take.reset();
         }
 
         fileSystem.close();
