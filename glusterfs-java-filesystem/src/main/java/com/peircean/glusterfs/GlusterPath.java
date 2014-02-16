@@ -2,7 +2,6 @@ package com.peircean.glusterfs;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +15,6 @@ import java.util.*;
  */
 @Data
 @EqualsAndHashCode(exclude = "pathString")
-@ToString(exclude = "pathString")
 public class GlusterPath implements Path {
     private GlusterFileSystem fileSystem;
     private String[] parts;
@@ -245,7 +243,9 @@ public class GlusterPath implements Path {
     @Override
     public URI toUri() {
         try {
-            return new URI(toString());
+            GlusterFileSystem fs = getFileSystem();
+            String authority = fs.getHost() + ":" + fs.getVolname();
+            return new URI(fs.provider().getScheme(), authority, toString(), null, null);
         } catch (URISyntaxException e) {
             throw new IllegalStateException(e);
         }
@@ -327,7 +327,7 @@ public class GlusterPath implements Path {
     }
 
     public String toString() {
-        return fileSystem.toString() + getString();
+        return /*fileSystem.toString() +*/ getString();
     }
 
     public String getString() {

@@ -1,6 +1,5 @@
 package com.peircean.glusterfs;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.regex.Pattern;
@@ -14,8 +13,6 @@ class GlusterPathMatcher implements PathMatcher {
 
     @Override
     public boolean matches(Path path) {
-        URI uri = path.toUri();
-        String input = uri.getPath();
-        return pattern.matcher(input).matches();
+        return pattern.matcher(path.toString()).matches();
     }
 }

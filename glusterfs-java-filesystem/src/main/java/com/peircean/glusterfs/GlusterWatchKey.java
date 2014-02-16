@@ -32,7 +32,7 @@ public class GlusterWatchKey implements WatchKey {
             for (Path f : paths) {
                 if (!Files.isDirectory(f)) {
                     files.add(f);
-                    GlusterWatchEvent event = events.get(f);
+                    GlusterWatchEvent event = events.get(f.getFileName());
                     long lastModified = Files.getLastModifiedTime(f).toMillis();
                     if (null != event) {
                         if (lastModified > event.getLastModified()) {
@@ -42,7 +42,7 @@ public class GlusterWatchKey implements WatchKey {
                             newEvents = true;
                         }
                     } else {
-                        event = new GlusterWatchEvent(f);
+                        event = new GlusterWatchEvent(f.getFileName());
                         event.setLastModified(lastModified);
                         events.put(f, event);
                         if (lastModified > lastPolled) {
