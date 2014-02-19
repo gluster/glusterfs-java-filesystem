@@ -110,11 +110,25 @@ public class GlusterPathTest extends TestCase {
 
     @Test
     public void testToUri() throws URISyntaxException {
-        String fileSystemUri = "gluster://123.45.67.89:testvol";
-        doReturn(fileSystemUri).when(mockFileSystem).toString();
+        GlusterFileSystemProvider mockProvider = mock(GlusterFileSystemProvider.class);
+        String scheme = GlusterFileSystemProvider.GLUSTER;
+        doReturn(scheme).when(mockProvider).getScheme();
+        doReturn(mockProvider).when(mockFileSystem).provider();
+
+        String host = "localhost";
+        doReturn(host).when(mockFileSystem).getHost();
+
+        String volname = "foo";
+        doReturn(volname).when(mockFileSystem).getVolname();
+        
         String path = "/foo/bar";
-        Path p = new GlusterPath(mockFileSystem, path);
-        assertEquals(new URI(fileSystemUri + path), p.toUri());
+        GlusterPath p = spy(new GlusterPath(mockFileSystem, path));
+        doReturn(mockFileSystem).when(p).getFileSystem();
+        doReturn(path).when(p).toString();
+
+        String authority = host + ":" + volname;
+        URI expected = new URI(scheme, authority, path, null, null);
+        assertEquals(expected, p.toUri());
     }
 
     @Test
@@ -468,15 +482,13 @@ public class GlusterPathTest extends TestCase {
         Path p = new GlusterPath(mockFileSystem, pathString);
         String filesystemString = "gluster://127.0.2.1:foo";
         doReturn(filesystemString).when(mockFileSystem).toString();
-        assertEquals(filesystemString + pathString, p.toString());
+        assertEquals(pathString, p.toString());
     }
 
     @Test
     public void testToString_whenNoPathString() {
         Path p = new GlusterPath(mockFileSystem, new String[]{"a", "b"}, true);
-        String filesystemString = "gluster://127.0.2.1:foo";
-        doReturn(filesystemString).when(mockFileSystem).toString();
-        assertEquals(filesystemString + "/a/b", p.toString());
+        assertEquals("/a/b", p.toString());
     }
 
     @Test
