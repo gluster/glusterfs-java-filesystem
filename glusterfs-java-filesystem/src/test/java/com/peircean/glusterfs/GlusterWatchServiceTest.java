@@ -49,15 +49,12 @@ public class GlusterWatchServiceTest {
 
 //    @Test
 //    public void testPollTimeout() throws InterruptedException {
-////        GlusterWatchService watchService = PowerMockito.spy(new GlusterWatchService());
 //        long timeout = 150L;
 //        TimeUnit unit = TimeUnit.MILLISECONDS;
 //        doReturn(timeout).when(watchService).timeoutToMillis(timeout, unit);
 //
 //        WatchKey mockKey = mock(WatchKey.class);
 //        PowerMockito.when(watchService.poll()).thenReturn(null).thenReturn(mockKey);
-////        PowerMockito.when(watchService.poll()).thenReturn(mockKey);
-////        doReturn(null).doReturn(mockKey).when(watchService).poll();
 //
 //        PowerMockito.spy(Thread.class);
 //        PowerMockito.doThrow(new InterruptedException()).when(Thread.class);
