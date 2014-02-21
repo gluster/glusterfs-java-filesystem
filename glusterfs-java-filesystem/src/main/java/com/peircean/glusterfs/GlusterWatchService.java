@@ -81,16 +81,16 @@ public class GlusterWatchService implements WatchService {
     @Override
     public WatchKey poll(long timeout, TimeUnit unit) {
         long timeoutMillis = timeoutToMillis(timeout, unit);
-        long runs = 2;
+        long loops = 0;
         while (running) {
             WatchKey key = poll();
             if (key != null) {
                 return key;
             }
-            if ((runs * PERIOD) > timeoutMillis) {
+            if ((loops * PERIOD) > timeoutMillis) {
                 return null;
             }
-            runs++;
+            loops++;
             try {
                 Thread.sleep(PERIOD);
             } catch (InterruptedException e) {

@@ -20,8 +20,6 @@ import static org.junit.Assert.assertFalse;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
-//import static org.mockito.Mockito.*;
-
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({GlusterWatchService.class, Thread.class})
 public class GlusterWatchServiceTest {
@@ -156,29 +154,29 @@ public class GlusterWatchServiceTest {
         watchService.poll(timeout, unit);
     }
 
-//    @Test
-//    public void testPollTimeout() throws InterruptedException {
-//        long timeout = 150L;
-//        TimeUnit unit = TimeUnit.MILLISECONDS;
+    @Test
+    public void testPollTimeout() throws InterruptedException {
+        long timeout = 150L;
+        TimeUnit unit = TimeUnit.MILLISECONDS;
 //        doReturn(timeout).when(watchService).timeoutToMillis(timeout, unit);
-//
-//        WatchKey mockKey = mock(WatchKey.class);
-//        PowerMockito.when(watchService.poll()).thenReturn(null).thenReturn(mockKey);
-//
-//        PowerMockito.spy(Thread.class);
-//        PowerMockito.doThrow(new InterruptedException()).when(Thread.class);
-//        Thread.sleep(GlusterWatchService.PERIOD);
-//
-//        WatchKey key = watchService.poll(timeout, unit);
-//
-//        assertEquals(mockKey, key);
-//
-//        Mockito.verify(watchService, Mockito.times(2)).poll();
+
+        WatchKey mockKey = mock(WatchKey.class);
+        PowerMockito.when(watchService.poll()).thenReturn(null).thenReturn(mockKey);
+
+        PowerMockito.spy(Thread.class);
+        PowerMockito.doThrow(new InterruptedException()).when(Thread.class);
+        Thread.sleep(GlusterWatchService.PERIOD);
+
+        WatchKey key = watchService.poll(timeout, unit);
+
+        assertEquals(mockKey, key);
+
+        Mockito.verify(watchService, Mockito.times(2)).poll();
 //        Mockito.verify(watchService).timeoutToMillis(timeout, unit);
-//
-//        PowerMockito.verifyStatic();
-//        Thread.sleep(GlusterWatchService.PERIOD);
-//    }
+
+        PowerMockito.verifyStatic(Mockito.times(1));
+        Thread.sleep(GlusterWatchService.PERIOD);
+    }
 
     @Test(expected = ClosedWatchServiceException.class)
     public void testTake_whenClosed() {
@@ -189,7 +187,6 @@ public class GlusterWatchServiceTest {
     @Test
     public void testTake() throws Exception {
         WatchKey mockKey = mock(WatchKey.class);
-//        PowerMockito.when(watchService.poll()).thenReturn(null).thenReturn(mockKey);
         doReturn(null).doReturn(mockKey).when(watchService).poll();
 
         PowerMockito.spy(Thread.class);
