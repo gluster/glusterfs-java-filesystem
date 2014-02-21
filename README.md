@@ -19,13 +19,14 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
 
 ### TODO:
 
-- Delete files
-- Fix/finish read/write (support position/seek better)
-- Fix/finish attribute support
-- Copy files
-- Watch files for changes
-- Advanced synchronous file I/O      
+- Watch files for changes   
+    Complete except for GlusterWatchKeyTest
+- Advanced synchronous file I/O   
     Seeking & reading/writing a portion of a file
+- Delete files
+- Copy files
+- Finish attribute support
+- Owner/group support
 - Asychronous file I/O
 - Better error reporting & handling
 - Test coverage report   
