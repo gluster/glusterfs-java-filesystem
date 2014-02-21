@@ -19,7 +19,7 @@ public class GlusterWatchEvent implements WatchEvent<Path> {
 
     @Override
     public int count() {
-        return this.count;
+        return count;
     }
 
     @Override

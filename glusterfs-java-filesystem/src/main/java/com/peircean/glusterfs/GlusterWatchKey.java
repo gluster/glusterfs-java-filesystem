@@ -25,46 +25,76 @@ public class GlusterWatchKey implements WatchKey {
     }
 
     public boolean update() {
-        List<Path> files = new LinkedList<>();
-        boolean newEvents = false;
+        DirectoryStream<Path> paths;
         try {
-            DirectoryStream<Path> paths = Files.newDirectoryStream(path);
-            for (Path f : paths) {
-                if (!Files.isDirectory(f)) {
-                    files.add(f);
-                    GlusterWatchEvent event = events.get(f.getFileName());
-                    long lastModified = Files.getLastModifiedTime(f).toMillis();
-                    if (null != event) {
-                        if (lastModified > event.getLastModified()) {
-                            event.setLastModified(lastModified);
-                            event.setKind(StandardWatchEventKinds.ENTRY_MODIFY);
-                            event.setCount(event.getCount() + 1);
-                            newEvents = true;
-                        }
-                    } else {
-                        event = new GlusterWatchEvent(f.getFileName());
-                        event.setLastModified(lastModified);
-                        events.put(f, event);
-                        if (lastModified > lastPolled) {
-                            newEvents = true;
-                        }
-                    }
-                }
-            }
-            for (Path f : events.keySet()) {
-                GlusterWatchEvent event = events.get(f);
-                if (!files.contains(f) &&
-                        !StandardWatchEventKinds.ENTRY_DELETE.name().equals(event.kind().name())) {
-                    event.setLastModified((new Date()).getTime());
-                    event.setKind(StandardWatchEventKinds.ENTRY_DELETE);
-                    event.setCount(event.getCount() + 1);
-                    newEvents = true;
-                }
-            }
-            return newEvents;
+            paths = Files.newDirectoryStream(path);
         } catch (IOException e) {
             return false;
         }
+        List<Path> files = new LinkedList<>();
+        boolean newEvents = false;
+        for (Path f : paths) {
+            newEvents |= processExistingFile(files, f);
+        }
+        for (Path f : events.keySet()) {
+            newEvents |= checkDeleted(files, f);
+        }
+        return newEvents;
+    }
+
+    boolean processExistingFile(List<Path> files, Path f) {
+        if (Files.isDirectory(f)) {
+            return false;
+        }
+        files.add(f);
+
+        long lastModified;
+        try {
+            lastModified = Files.getLastModifiedTime(f).toMillis();
+        } catch (IOException e) {
+            return false;
+        }
+
+        GlusterWatchEvent event = events.get(f);
+        if (null != event) {
+            return checkModified(event, lastModified);
+        } else {
+            return checkCreated(f, lastModified);
+        }
+    }
+
+    boolean checkDeleted(List<Path> files, Path f) {
+        GlusterWatchEvent event = events.get(f);
+        if (!files.contains(f) &&
+                !StandardWatchEventKinds.ENTRY_DELETE.name().equals(event.kind().name())) {
+            event.setLastModified((new Date()).getTime());
+            event.setKind(StandardWatchEventKinds.ENTRY_DELETE);
+            event.setCount(event.getCount() + 1);
+            return true;
+        }
+        return false;
+    }
+
+    boolean checkCreated(Path f, long lastModified) {
+        GlusterWatchEvent event = new GlusterWatchEvent(f.getFileName());
+        event.setLastModified(lastModified);
+        events.put(f, event);
+        return (lastModified > lastPolled);
+    }
+
+    boolean checkModified(GlusterWatchEvent event, long lastModified) {
+        if (lastModified > event.getLastModified()) {
+            event.setLastModified(lastModified);
+            if (event.kind().name().equals(StandardWatchEventKinds.ENTRY_DELETE.name())) {
+                event.setKind(StandardWatchEventKinds.ENTRY_CREATE);
+                event.setCount(0);
+            } else {
+                event.setKind(StandardWatchEventKinds.ENTRY_MODIFY);
+                event.setCount(event.getCount() + 1);
+            }
+            return true;
+        }
+        return false;
     }
 
     boolean kindsContains(WatchEvent.Kind kind) {
@@ -82,18 +112,27 @@ public class GlusterWatchKey implements WatchKey {
             return new LinkedList<>();
         }
         ready = false;
+        return findPendingEvents();
+    }
+
+    LinkedList<WatchEvent<?>> findPendingEvents() {
         long maxModifiedTime = lastPolled;
         LinkedList<WatchEvent<?>> pendingEvents = new LinkedList<>();
         for (Path p : events.keySet()) {
-            GlusterWatchEvent e = events.get(p);
-            long lastModified = e.getLastModified();
-            if (lastModified > lastPolled && kindsContains(e.kind())) {
-                pendingEvents.add(e);
-            }
+            long lastModified = queueEventIfPending(pendingEvents, p);
             maxModifiedTime = Math.max(maxModifiedTime, lastModified);
         }
         lastPolled = maxModifiedTime;
         return pendingEvents;
+    }
+
+    private long queueEventIfPending(LinkedList<WatchEvent<?>> pendingEvents, Path p) {
+        GlusterWatchEvent e = events.get(p);
+        long lastModified = e.getLastModified();
+        if (lastModified > lastPolled && kindsContains(e.kind())) {
+            pendingEvents.add(e);
+        }
+        return lastModified;
     }
 
     @Override

@@ -149,7 +149,9 @@ public class Example {
                 Path absolutePath = one.resolve(path).toAbsolutePath();
                 boolean exists = Files.exists(absolutePath);
                 System.out.println("EXISTS? " + exists);
-                System.out.println(Files.size(absolutePath));
+                if (exists) {
+                    System.out.println("SIZE: " + Files.size(absolutePath));
+                }
                 System.out.println(absolutePath);
                 System.out.println(e.toString());
             }
