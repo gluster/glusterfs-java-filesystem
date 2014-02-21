@@ -25,8 +25,9 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
     Seeking & reading/writing a portion of a file
 - Delete files
 - Copy files
-- Finish attribute support
-- Owner/group support
+- Finish attribute support   
+    Owner/group names & ability to change   
+    More ways to set permissions
 - Asychronous file I/O
 - Better error reporting & handling
 - Test coverage report   
@@ -39,8 +40,8 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
     Read the contents of a file all at once   
     Write a chunk of bytes to a file all at once
 - File attributes   
-    See & set owner, permissions, and last modified timestamp on files and directories      
-    See file size
+    See owner/group id, size, permissions, and last modified timestamp on files and directories   
+    Set permissions
 - Filesystem/volume stats   
     See the total, free, and usable bytes in a volume
 - Directory listing (with filtering)
