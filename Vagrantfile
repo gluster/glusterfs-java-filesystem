@@ -25,7 +25,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.network :private_network, ip: "172.31.83.23"
+  private_ip = "172.31.31.31"
+  
+  config.vm.network :private_network, ip: private_ip
+
+  config.vm.provision "shell" do |s|
+    s.path = "vagrant-provisioner.sh"
+    s.args = [private_ip]
+  end
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -56,10 +63,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   #
   # View the documentation for the provider you're using for more
   # information on available options.
-
-  #Vagrant.configure("2") do |config|
-  config.vm.provision "shell", path: "vagrant-provisioner.sh"
-  #end
 
   # Enable provisioning with Puppet stand alone.  Puppet manifests
   # are contained in a directory path relative to this Vagrantfile.
