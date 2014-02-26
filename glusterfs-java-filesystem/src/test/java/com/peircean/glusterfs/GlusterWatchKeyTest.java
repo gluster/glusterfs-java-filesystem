@@ -14,13 +14,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.*;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
@@ -151,8 +147,24 @@ public class GlusterWatchKeyTest {
     }
 
     @Test
-    public void testPollEvents() {
+    public void testPollEvents_whenNotReady() {
+        key.setReady(false);
+        assertTrue(key.pollEvents().isEmpty());
+    }
 
+    @Test
+    public void testPollEvents_whenReady() {
+        key.setReady(true);
+
+        LinkedList<WatchEvent<?>> mockEvents = mock(LinkedList.class);
+        doReturn(mockEvents).when(key).findPendingEvents();
+
+        List<WatchEvent<?>> events = key.pollEvents();
+        assertEquals(mockEvents, events);
+
+        assertFalse(key.isReady());
+
+        verify(key).findPendingEvents();
     }
 
     @Test
