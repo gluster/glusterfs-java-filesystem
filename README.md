@@ -7,20 +7,23 @@ This project aims to be a complete implementation of a Java7/NIO.2 FileSystem ba
 
 # Use
 
+A Vagrantfile in the root of this repository sets up a VM with a volume called *foo* at IP address *172.31.31.31* on a 
+private network.
+
 The [Example.java](glusterfs-java-filesystem-example/src/main/java/com/peircean/glusterfs/example/Example.java) file in 
 the glusterfs-java-filesystem-example project provides a demonstration of the capabilities of this project from a high 
-level consumer's point of view.
+level consumer's point of view, it connects to the volume on the vagrant VM.
 
-`glusterfs-java-filesystem-example/src/main/java/com/peircean/glusterfs/example/Example.java`
+To run:
 
-The example program can be run with maven by executing `mvn exec:exec` in the glusterfs-java-filesystem-example directory.
+    cd glusterfs-java-filesystem-example
+    vagrant up
+    mvn exec:exec
 
 # Roadmap
 
 ### TODO:
 
-- Watch files for changes   
-    Complete except for GlusterWatchKeyTest
 - Advanced synchronous file I/O   
     Seeking & reading/writing a portion of a file
 - Delete files
@@ -46,6 +49,8 @@ The example program can be run with maven by executing `mvn exec:exec` in the gl
     See the total, free, and usable bytes in a volume
 - Directory listing (with filtering)
 - Move/rename files
+- Watch files for changes   
+    Complete except for GlusterWatchKeyTest, in progress
 
 # Project License
 
