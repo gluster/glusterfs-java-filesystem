@@ -12,3 +12,7 @@ target
 .settings
 eclipse-classes
 hs_err_pid*.log
+.vagrant
+.clover
+dependency-reduced-pom.xml
+release.properties
