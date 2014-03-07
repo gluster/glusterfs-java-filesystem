@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.peircean.libgfapi-jni</groupId>
             <artifactId>libgfapi-all</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
 
         <dependency>
