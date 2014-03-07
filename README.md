@@ -53,7 +53,7 @@ Contact me (on IRC, Twitter, or in a Github issue) if you need help obtaining a 
 
 Once this library is in your classpath all you need to do in your code is access a GlusterFS URI, for example
 
-    glusterfs://server:volume/path
+    gluster://server:volume/path
 
 ## Example usage
 
