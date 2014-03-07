@@ -5,7 +5,57 @@ This project aims to be a complete implementation of a Java7/NIO.2 FileSystem ba
 
 [![Build Status](https://travis-ci.org/semiosis/glusterfs-java-filesystem.png?branch=master)](https://travis-ci.org/semiosis/glusterfs-java-filesystem)
 
+Please let me know if you use this project, even if you're just checking it out, I'd like to hear from you.
+
+I prefer to be contacted on IRC, Twitter, or a Github issue.  You can find me, semiosis, in #gluster on Freenode IRC.  My twitter handle is @pragmaticism.
+
+Thanks!
+
 # Use
+
+## Adding to your maven project
+
+    <repositories>
+        <repository>
+            <id>peircean-release</id>
+            <url>http://maven.peircean.com/release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
+    
+    <dependencies>
+        <dependency>
+            <groupId>com.peircean.glusterfs</groupId>
+            <artifactId>glusterfs-java-filesystem</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
+
+## Adding to your non-maven project
+
+The maven shade plugin can build a unified (shaded) JAR suitable for dropping in to the classpath of any JVM application.
+
+You can build a "shaded" JAR by cloning the project and running the following command in the glusterfs-java-filesystem subdirectory:
+
+    cd glusterfs-java-filesystem
+    mvn package shade:shade
+
+Maven will report the path of this shaded JAR.  You can run `export CLASSPATH=<path-to-shaded.jar>` in a terminal before running your other application.
+
+Contact me (on IRC, Twitter, or in a Github issue) if you need help obtaining a JAR, if you can't, or don't want to, build it with maven yourself.
+
+## Access GlusterFS volumes with the NIO.2 API
+
+Once this library is in your classpath all you need to do in your code is access a GlusterFS URI, for example
+
+    glusterfs://server:volume/path
+
+## Example usage
 
 A Vagrantfile in the root of this repository sets up a VM with a volume called *foo* at IP address *172.31.31.31* on a 
 private network.
@@ -51,6 +101,10 @@ To run:
 - Move/rename files
 - Watch files for changes   
     Complete except for GlusterWatchKeyTest, in progress
+
+# Contributing/Development
+
+I'd appreciate your help with this project.  If you have any feedback at all please get in touch.  I'm interested in everything from gripes to pull requests.
 
 # Project License
 
