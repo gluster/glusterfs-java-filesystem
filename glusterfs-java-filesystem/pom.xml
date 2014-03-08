@@ -3,7 +3,7 @@
     <parent>
         <artifactId>glusterfs-java-filesystem-project</artifactId>
         <groupId>com.peircean.glusterfs</groupId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
