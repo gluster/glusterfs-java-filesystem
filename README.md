@@ -1,6 +1,6 @@
 # glusterfs-java-filesystem
 
-This project aims to be a complete implementation of a Java7/NIO.2 FileSystem backed by
+This project aims to be a complete implementation of a Java7/NIO.2 File System Provider backed by
 [GlusterFS](http://www.gluster.org/) via [libgfapi-jni](https://github.com/semiosis/libgfapi-jni)
 
 [![Build Status](https://travis-ci.org/semiosis/glusterfs-java-filesystem.png?branch=master)](https://travis-ci.org/semiosis/glusterfs-java-filesystem)

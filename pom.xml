@@ -5,16 +5,31 @@
 
     <groupId>com.peircean.glusterfs</groupId>
     <artifactId>glusterfs-java-filesystem-project</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
     <modules>
         <module>glusterfs-java-filesystem</module>
         <module>glusterfs-java-filesystem-example</module>
     </modules>
     <packaging>pom</packaging>
 
+    <name>${project.artifactId}</name>
+    <description>glusterfs-java-filesystem aims to be a complete implementation of a Java7/NIO.2 File System Provider
+        backed by GlusterFS via libgfapi-jni
+    </description>
+    <licenses>
+        <license>
+            <name>BSD-style</name>
+            <url>https://github.com/semiosis/glusterfs-java-filesystem/blob/master/LICENSE.txt</url>
+            <comments>A permissive open source license</comments>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <inceptionYear>2013</inceptionYear>
 
     <scm>
+        <url>https://github.com/semiosis/glusterfs-java-filesystem</url>
+        <connection>scm:git:https://github.com/semiosis/glusterfs-java-filesystem.git</connection>
         <developerConnection>scm:git:https://github.com/semiosis/glusterfs-java-filesystem.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
