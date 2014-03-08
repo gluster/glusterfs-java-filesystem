@@ -4,7 +4,7 @@
 
     <groupId>com.peircean.glusterfs</groupId>
     <artifactId>glusterfs-java-filesystem-project</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
     <modules>
         <module>glusterfs-java-filesystem</module>
         <module>glusterfs-java-filesystem-example</module>
@@ -30,7 +30,7 @@
         <url>https://github.com/semiosis/glusterfs-java-filesystem</url>
         <connection>scm:git:https://github.com/semiosis/glusterfs-java-filesystem.git</connection>
         <developerConnection>scm:git:https://github.com/semiosis/glusterfs-java-filesystem.git</developerConnection>
-        <tag>glusterfs-java-filesystem-project-1.0.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>
