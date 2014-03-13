@@ -3,13 +3,13 @@
     <parent>
         <artifactId>glusterfs-java-filesystem-project</artifactId>
         <groupId>com.peircean.glusterfs</groupId>
-        <version>1.0.2-SNAPSHOT</version>
+        <version>1.0.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.peircean.glusterfs</groupId>
     <artifactId>glusterfs-java-filesystem-example</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
 
     <build>
         <plugins>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>com.peircean.glusterfs</groupId>
             <artifactId>glusterfs-java-filesystem</artifactId>
-            <version>1.0.2-SNAPSHOT</version>
+            <version>1.0.2</version>
         </dependency>
     </dependencies>
 
