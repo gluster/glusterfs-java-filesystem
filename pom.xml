@@ -11,6 +11,12 @@
     </modules>
     <packaging>pom</packaging>
 
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
     <name>${project.artifactId}</name>
     <description>glusterfs-java-filesystem aims to be a complete implementation of a Java7/NIO.2 File System Provider
         backed by GlusterFS via libgfapi-jni
@@ -70,51 +76,7 @@
                 </configuration>
             </plugin>
         </plugins>
-        <extensions>
-            <extension>
-                <groupId>org.kuali.maven.wagons</groupId>
-                <artifactId>maven-s3-wagon</artifactId>
-                <version>1.1.20</version>
-            </extension>
-        </extensions>
     </build>
-    <distributionManagement>
-        <site>
-            <id>s3.site</id>
-            <url>s3://maven.peircean.com/site</url>
-        </site>
-        <repository>
-            <id>s3.release</id>
-            <url>s3://maven.peircean.com/release</url>
-        </repository>
-        <snapshotRepository>
-            <id>s3.snapshot</id>
-            <url>s3://maven.peircean.com/snapshot</url>
-        </snapshotRepository>
-    </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>peircean-snapshot</id>
-            <url>http://maven.peircean.com/snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-        <repository>
-            <id>peircean-release</id>
-            <url>http://maven.peircean.com/release</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
