@@ -15,24 +15,11 @@ Thanks!
 
 ## Adding to your maven project
 
-    <repositories>
-        <repository>
-            <id>peircean-release</id>
-            <url>http://maven.peircean.com/release</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-    </repositories>
-    
     <dependencies>
         <dependency>
             <groupId>com.peircean.glusterfs</groupId>
             <artifactId>glusterfs-java-filesystem</artifactId>
-            <version>1.0</version>
+            <version>1.0.2</version>
         </dependency>
     </dependencies>
 
