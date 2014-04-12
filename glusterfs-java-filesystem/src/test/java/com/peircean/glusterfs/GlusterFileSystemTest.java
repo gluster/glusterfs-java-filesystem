@@ -60,7 +60,7 @@ public class GlusterFileSystemTest extends TestCase {
 
     @Test
     public void testClose() throws IOException {
-        doReturn(-1).when(mockFileSystemProvider).close(VOLPTR);
+        doReturn(0).when(mockFileSystemProvider).close(VOLPTR);
         fileSystem.close();
         verify(mockFileSystemProvider).close(VOLPTR);
         assertEquals(-1, fileSystem.getVolptr());

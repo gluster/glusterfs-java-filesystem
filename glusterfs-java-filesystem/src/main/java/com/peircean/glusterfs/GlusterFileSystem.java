@@ -40,7 +40,7 @@ public class GlusterFileSystem extends FileSystem {
     public void close() throws IOException {
         if (isOpen()) {
             int fini = provider.close(volptr);
-            if (-1 != fini) {
+            if (0 != fini) {
                 throw new IOException("Unable to close filesystem: " + volname);
             }
             volptr = -1;
