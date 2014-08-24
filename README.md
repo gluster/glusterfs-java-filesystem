@@ -72,7 +72,7 @@ To run:
 - Better error reporting & handling
 - Test coverage report   
     Blocked due to use of PowerMock
-- Update watch service to use libgfchangelog (instead of polling)
+- Update watch service to use [libgfchangelog](https://github.com/gluster/glusterfs/blob/master/xlators/features/changelog/lib/examples/c/get-changes.c) (instead of polling)
 
 ### Completed:
 
