@@ -72,6 +72,7 @@ To run:
 - Better error reporting & handling
 - Test coverage report   
     Blocked due to use of PowerMock
+- Update watch service to use libgfchangelog (instead of polling)
 
 ### Completed:
 
