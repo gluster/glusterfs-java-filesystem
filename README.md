@@ -61,18 +61,19 @@ To run:
 
 ### TODO:
 
-- Advanced synchronous file I/O   
-    Seeking & reading/writing a portion of a file
 - Delete files
 - Copy files
+- Align project versions with glusterfs (this project & libgfapi-jni)
+- Update watch service to use [libgfchangelog](https://github.com/gluster/glusterfs/blob/master/xlators/features/changelog/lib/examples/c/get-changes.c) (instead of polling)
 - Finish attribute support   
     Owner/group names & ability to change   
     More ways to set permissions
+- Advanced synchronous file I/O   
+    Seeking & reading/writing a portion of a file
 - Asychronous file I/O
 - Better error reporting & handling
-- Test coverage report   
-    Blocked due to use of PowerMock
-- Update watch service to use [libgfchangelog](https://github.com/gluster/glusterfs/blob/master/xlators/features/changelog/lib/examples/c/get-changes.c) (instead of polling)
+- Publish test coverage report to Coveralls.io   
+    [Blocked](https://github.com/trautonen/coveralls-maven-plugin/issues/36) due to use of Atlassian Clover
 
 ### Completed:
 
@@ -89,6 +90,7 @@ To run:
 - Move/rename files
 - Watch files for changes   
     Complete except for GlusterWatchKeyTest, in progress
+- Publish test coverage & code quality reports to [SonarQube](http://sonar.peircean.com/dashboard/index/com.peircean.glusterfs:glusterfs-java-filesystem)
 
 # Contributing/Development
 
