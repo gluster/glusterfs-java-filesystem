@@ -1,6 +1,6 @@
 #!/bin/bash
 
-add-apt-repository -y ppa:semiosis/ubuntu-glusterfs-3.4
+add-apt-repository -y ppa:gluster/glusterfs-3.4
 apt-get update
 # apt-get -y dist-upgrade
 apt-get -y install glusterfs-server
