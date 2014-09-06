@@ -5,6 +5,8 @@ This project aims to be a complete implementation of a Java7/NIO.2 File System P
 
 [![Build Status](https://travis-ci.org/semiosis/glusterfs-java-filesystem.png?branch=master)](https://travis-ci.org/semiosis/glusterfs-java-filesystem)
 
+[Test Coverage & Code Quality](http://sonar.peircean.com/dashboard/index/com.peircean.glusterfs:glusterfs-java-filesystem)
+
 Please let me know if you use this project, even if you're just checking it out, I'd like to hear from you.
 
 I prefer to be contacted on IRC, Twitter, or a Github issue.  You can find me, semiosis, in #gluster on Freenode IRC.  My twitter handle is @pragmaticism.
