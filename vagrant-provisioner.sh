@@ -12,3 +12,5 @@ gluster volume set foo server.allow-insecure on
 gluster volume start foo
 mkdir /mnt/foo
 mount -t glusterfs localhost:foo /mnt/foo
+chmod ugo+w /mnt/foo
+
