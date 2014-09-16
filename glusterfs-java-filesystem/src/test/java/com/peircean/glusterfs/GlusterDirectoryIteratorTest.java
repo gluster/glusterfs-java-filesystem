@@ -65,7 +65,7 @@ public class GlusterDirectoryIteratorTest {
         doNothing().when(iterator).advance();
         assertFalse(iterator.hasNext());
         verify(iterator).advance();
-        verify(mockFilter).accept(fakeResultPath);
+        verify(mockFilter, never()).accept(fakeResultPath);
     }
 
     @Test

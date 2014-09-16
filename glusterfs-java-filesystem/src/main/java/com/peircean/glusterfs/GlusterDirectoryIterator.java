@@ -22,7 +22,7 @@ class GlusterDirectoryIterator<T> implements Iterator<GlusterPath> {
         advance();
         if (null != filter) {
             try {
-                while (!filter.accept(nextPath) && next.d_ino != 0) {
+                while (next.d_ino != 0 && !filter.accept(nextPath)) {
                     advance();
                 }
             } catch (IOException e) {
