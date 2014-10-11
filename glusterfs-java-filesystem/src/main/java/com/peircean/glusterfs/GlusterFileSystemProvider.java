@@ -325,6 +325,31 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     }
 
+    @Override
+    public Path readSymbolicLink(Path link) throws IOException {
+        String pathString = link.toString();
+        if (!Files.isSymbolicLink(link)) {
+            throw new NotLinkException(pathString);
+        }
+
+        stat stat = new stat();
+        GlusterFileSystem fileSystem = (GlusterFileSystem) link.getFileSystem();
+        long volptr = fileSystem.getVolptr();
+        int statReturn = GLFS.glfs_lstat(volptr, pathString, stat);
+        if (0 != statReturn) {
+            throw new IOException("Unable to get size of symlink " + pathString);
+        }
+
+        int length = (int) stat.st_size;
+        byte[] content = new byte[length];
+        int readReturn = GLFS.glfs_readlink(volptr, pathString, content, (long) length);
+        if (0 != readReturn) {
+            throw new IOException("Unable to read symlink " + pathString);
+        }
+        
+        return new GlusterPath(fileSystem, new String(content));
+    }
+
     int close(long volptr) {
         return glfs_fini(volptr);
     }

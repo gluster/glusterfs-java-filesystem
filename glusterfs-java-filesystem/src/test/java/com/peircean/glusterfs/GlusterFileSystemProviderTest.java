@@ -36,7 +36,7 @@ import static org.powermock.api.mockito.PowerMockito.*;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({GLFS.class, GlusterFileSystemProvider.class, GlusterFileChannel.class, GlusterFileAttributes.class,
-        GlusterDirectoryStream.class})
+        GlusterDirectoryStream.class, String.class})
 public class GlusterFileSystemProviderTest extends TestCase {
 
     public static final String SERVER = "hostname";
@@ -653,5 +653,107 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verifyNew(GlusterDirectoryStream.class).withNoArguments();
         verifyStatic();
         Files.isDirectory(mockPath);
+    }
+
+    @Test(expected = NotLinkException.class)
+    public void testReadSymbolicLink_whenNotLink() throws IOException {
+        mockStatic(Files.class);
+        when(Files.isSymbolicLink(mockPath)).thenReturn(false);
+        provider.readSymbolicLink(mockPath);
+    }
+
+    @Test(expected = IOException.class)
+    public void testReadSymbolicLink_whenCantStat() throws Exception {
+        Long volptr = 12333L;
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+
+        stat stat = new stat();
+        whenNew(stat.class).withNoArguments().thenReturn(stat);
+
+        mockStatic(Files.class);
+        when(Files.isSymbolicLink(mockPath)).thenReturn(true);
+
+        mockStatic(GLFS.class);
+        String pathString = "/somepath";
+        doReturn(pathString).when(mockPath).toString();
+        when(GLFS.glfs_lstat(volptr, pathString, stat)).thenReturn(-1);
+
+        provider.readSymbolicLink(mockPath);
+    }
+
+    @Test(expected = IOException.class)
+    public void testReadSymbolicLink_whenCantReadlink() throws Exception {
+        Long volptr = 12333L;
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+
+        stat stat = new stat();
+        int length = 13;
+        stat.st_size = length;
+        whenNew(stat.class).withNoArguments().thenReturn(stat);
+
+        mockStatic(Files.class);
+        when(Files.isSymbolicLink(mockPath)).thenReturn(true);
+
+        mockStatic(GLFS.class);
+        String pathString = "/somepath";
+        doReturn(pathString).when(mockPath).toString();
+        when(GLFS.glfs_lstat(volptr, pathString, stat)).thenReturn(0);
+
+        mockStatic(GLFS.class);
+        byte[] content = new byte[length];
+        when(GLFS.glfs_readlink(volptr, pathString, content, (long) length)).thenReturn(-1);
+
+        provider.readSymbolicLink(mockPath);
+    }
+
+    @Test
+    public void testReadSymbolicLink() throws Exception {
+        Long volptr = 12333L;
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+        doReturn("/").when(mockFileSystem).getSeparator();
+
+        stat stat = new stat();
+        int length = 13;
+        stat.st_size = length;
+        whenNew(stat.class).withNoArguments().thenReturn(stat);
+
+        mockStatic(Files.class);
+        when(Files.isSymbolicLink(mockPath)).thenReturn(true);
+
+        mockStatic(GLFS.class);
+        String pathString = "/somepath";
+        doReturn(pathString).when(mockPath).toString();
+        when(GLFS.glfs_lstat(volptr, pathString, stat)).thenReturn(0);
+
+        String target = "symlink/target";
+        byte[] content = target.getBytes();
+        mockStatic(GLFS.class);
+        when(GLFS.glfs_readlink(volptr, pathString, content, (long) length)).thenReturn(0);
+        whenNew(String.class).withArguments(isA(byte[].class)).thenReturn(target);
+
+        Path read = provider.readSymbolicLink(mockPath);
+        
+        GlusterPath expectedPath = new GlusterPath(mockFileSystem, target);
+        assertEquals(expectedPath, read);
+
+        verify(mockPath).getFileSystem();
+        verify(mockFileSystem).getVolptr();
+        verify(mockPath).toString();
+        verify(mockFileSystem).getSeparator();
+        
+        verifyStatic();
+        Files.isSymbolicLink(mockPath);
+        
+        verifyStatic();
+        GLFS.glfs_lstat(volptr, pathString, stat);
+        
+        verifyStatic();
+        GLFS.glfs_readlink(volptr, pathString, content, (long) length);
+        
+        verifyNew(stat.class).withNoArguments();
+        verifyNew(String.class).withArguments(content);
     }
 }
