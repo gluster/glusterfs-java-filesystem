@@ -11,7 +11,21 @@
     <artifactId>glusterfs-java-filesystem-example</artifactId>
     <version>1.0.3-SNAPSHOT</version>
 
+    <properties>
+        <glusterfs.server>172.31.31.31</glusterfs.server>
+        <glusterfs.volume>foo</glusterfs.volume>
+    </properties>
+
     <build>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

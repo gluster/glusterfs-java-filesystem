@@ -12,6 +12,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -29,12 +30,17 @@ public class Example {
     }
 
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
+        Properties properties = new Properties();
+        properties.load(Example.class.getClassLoader().getResourceAsStream("example.properties"));
+
+        String vagrantBox = properties.getProperty("glusterfs.server");
+        String volname = properties.getProperty("glusterfs.volume");
+
         System.out.println(getProvider("gluster").toString());
 
-        String vagrantBox = "172.31.31.31";
 
-        String mountUri = "gluster://" + vagrantBox + ":foo/";
-        String testUri = "gluster://" + vagrantBox + ":foo/baz";
+        String mountUri = "gluster://" + vagrantBox + ":" + volname + "/";
+        String testUri = "gluster://" + vagrantBox + ":" + volname + "/baz";
         Path mountPath = Paths.get(new URI(mountUri));
 
         FileSystem fileSystem = FileSystems.newFileSystem(new URI(mountUri), null);
@@ -140,7 +146,7 @@ public class Example {
         }
 
         WatchService watchService = fileSystem.newWatchService();
-        Path one = Paths.get(new URI("gluster://" + vagrantBox + ":foo/one"));
+        Path one = Paths.get(new URI("gluster://" + vagrantBox + ":" + volname + "/one"));
 
         System.out.println("STARTSWITH empty: " + one.startsWith("/"));
         one.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
