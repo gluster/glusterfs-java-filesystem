@@ -340,10 +340,10 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
             throw new IOException("Unable to get size of symlink " + pathString);
         }
 
-        int length = (int) stat.st_size;
-        byte[] content = new byte[length];
-        int readReturn = GLFS.glfs_readlink(volptr, pathString, content, (long) length);
-        if (0 != readReturn) {
+        long length = (int) stat.st_size;
+        byte[] content = new byte[(int)length];
+        int readReturn = GLFS.glfs_readlink(volptr, pathString, content, content.length);
+        if (-1 == readReturn) {
             throw new IOException("Unable to read symlink " + pathString);
         }
         

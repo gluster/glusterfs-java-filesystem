@@ -38,7 +38,6 @@ public class Example {
 
         System.out.println(getProvider("gluster").toString());
 
-
         String mountUri = "gluster://" + vagrantBox + ":" + volname + "/";
         String testUri = "gluster://" + vagrantBox + ":" + volname + "/baz";
         Path mountPath = Paths.get(new URI(mountUri));
@@ -89,6 +88,10 @@ public class Example {
         } catch (AccessDeniedException e) {
             System.out.println("Can't execute file, that's good.");
         }
+
+        String symlinkName = "sl";
+        Path symlinkPath = Paths.get(new URI(mountUri + symlinkName));
+        System.out.println("SYMLINK: " + symlinkName + " => " + Files.readSymbolicLink(symlinkPath));
 
         Path copyPath = glusterPath.resolveSibling("copy");
 //        Files.createFile(copyPath, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-rw-rw-")));
