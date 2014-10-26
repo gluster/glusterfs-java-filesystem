@@ -1,0 +1,3 @@
+# Run clover & sonar analyses separately
+mvn -Psonar clean clover2:setup test clover2:aggregate clover2:clover
+mvn -Psonar sonar:sonar
