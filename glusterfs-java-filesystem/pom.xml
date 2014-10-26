@@ -77,8 +77,9 @@
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>maven-clover2-plugin</artifactId>
-                        <version>3.2.2</version>
+                        <version>4.0.2</version>
                         <configuration>
+                            <licenseLocation>${clover.licenseLocation}</licenseLocation>
                             <includes>
                                 <include>**/*.java</include>
                             </includes>
@@ -86,6 +87,8 @@
                                 <exclude>**/borrowed/*.java</exclude>
                                 <exclude>**/*Test.java</exclude>
                             </excludes>
+                            <sonar.clover.reportPath>${project.build.directory}/site/clover/clover.xml</sonar.clover.reportPath>
+                            <sonar.surefire.reportsPath>${project.build.directory}/surefire-reports</sonar.surefire.reportsPath>
                         </configuration>
                     </plugin>
                 </plugins>
