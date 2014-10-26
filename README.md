@@ -74,6 +74,7 @@ To run:
     Seeking & reading/writing a portion of a file
 - Asychronous file I/O
 - Better error reporting & handling
+- Finish readSymbolicLink unit tests
 - Publish test coverage report to Coveralls.io   
     [Blocked](https://github.com/trautonen/coveralls-maven-plugin/issues/36) due to use of Atlassian Clover
 
@@ -92,6 +93,7 @@ To run:
 - Move/rename files
 - Watch files for changes   
     Complete except for GlusterWatchKeyTest, in progress
+- Create & Read symlinks (read tests incomplete)
 - Publish test coverage & code quality reports to [SonarQube](http://sonar.peircean.com/dashboard/index/com.peircean.glusterfs:glusterfs-java-filesystem)
 
 # Contributing/Development
