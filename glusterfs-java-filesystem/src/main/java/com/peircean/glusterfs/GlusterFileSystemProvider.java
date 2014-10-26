@@ -350,6 +350,23 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
         return new GlusterPath(fileSystem, new String(content));
     }
 
+    @Override
+    public void createSymbolicLink(Path link, Path target, FileAttribute<?>... attrs) throws IOException {
+        String linkPath = link.toString();
+        if (Files.exists(link, LinkOption.NOFOLLOW_LINKS)) {
+            throw new FileAlreadyExistsException(linkPath);
+        }
+        if (null != attrs && attrs.length > 0) {
+            throw new UnsupportedOperationException("glfs_symlink does not support atomic mode/perms");
+        }
+        GlusterFileSystem fileSystem = (GlusterFileSystem) link.getFileSystem();
+        long volptr = fileSystem.getVolptr();
+        int ret = GLFS.glfs_symlink(volptr, target.toString(), linkPath);
+        if (0 != ret) {
+            throw new IOException("Unknown error creating symlink: " + linkPath);
+        }
+    }
+
     int close(long volptr) {
         return glfs_fini(volptr);
     }

@@ -757,4 +757,74 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verifyNew(stat.class).withNoArguments();
 //        verifyNew(String.class).withArguments(content);
     }
+    
+    @Test(expected = FileAlreadyExistsException.class)
+    public void testCreateSymlink_whenExists() throws IOException {
+        Mockito.doReturn("mockpath").when(mockPath).toString();
+        
+        mockStatic(Files.class);
+        when(Files.exists(mockPath, LinkOption.NOFOLLOW_LINKS)).thenReturn(true);
+
+        provider.createSymbolicLink(mockPath, targetPath);
+    }
+    
+    @Test(expected = UnsupportedOperationException.class)
+    public void testCreateSymlink_whenAttrs() throws IOException {
+        Mockito.doReturn("mockpath").when(mockPath).toString();
+        
+        mockStatic(Files.class);
+        when(Files.exists(mockPath, LinkOption.NOFOLLOW_LINKS)).thenReturn(false);
+
+        FileAttribute<Object>[] attrs = new FileAttribute[1];
+        provider.createSymbolicLink(mockPath, targetPath, attrs);
+    }
+
+    @Test(expected = IOException.class)
+    public void testCreateSymlink_whenError() throws IOException {
+        Mockito.doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        long volptr = 1234L;
+        Mockito.doReturn(volptr).when(mockFileSystem).getVolptr();
+        String mockpathString = "mockpath";
+        Mockito.doReturn(mockpathString).when(mockPath).toString();
+
+        String targetpathString = "targetpath";
+        Mockito.doReturn(targetpathString).when(targetPath).toString();
+
+        mockStatic(Files.class);
+        when(Files.exists(mockPath, LinkOption.NOFOLLOW_LINKS)).thenReturn(false);
+
+        mockStatic(GLFS.class);
+        when(GLFS.glfs_symlink(volptr, targetpathString, mockpathString)).thenReturn(-1);
+
+        provider.createSymbolicLink(mockPath, targetPath);
+    }
+
+    @Test
+    public void testCreateSymlink() throws IOException {
+        Mockito.doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        long volptr = 1234L;
+        Mockito.doReturn(volptr).when(mockFileSystem).getVolptr();
+        String mockpathString = "mockpath";
+        Mockito.doReturn(mockpathString).when(mockPath).toString();
+
+        String targetpathString = "targetpath";
+        Mockito.doReturn(targetpathString).when(targetPath).toString();
+
+        mockStatic(Files.class);
+        when(Files.exists(mockPath, LinkOption.NOFOLLOW_LINKS)).thenReturn(false);
+
+        mockStatic(GLFS.class);
+        when(GLFS.glfs_symlink(volptr, targetpathString, mockpathString)).thenReturn(0);
+
+        provider.createSymbolicLink(mockPath, targetPath);
+
+        verify(mockPath).getFileSystem();
+        verify(mockFileSystem).getVolptr();
+        
+        verifyStatic();
+        Files.exists(mockPath, LinkOption.NOFOLLOW_LINKS);
+        
+        verifyStatic();
+        GLFS.glfs_symlink(volptr, targetpathString, mockpathString);
+    }
 }

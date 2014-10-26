@@ -89,9 +89,10 @@ public class Example {
             System.out.println("Can't execute file, that's good.");
         }
 
-        String symlinkName = "sl";
-        Path symlinkPath = Paths.get(new URI(mountUri + symlinkName));
-        System.out.println("SYMLINK: " + symlinkName + " => " + Files.readSymbolicLink(symlinkPath));
+        Path symlinkPath = Paths.get(new URI(mountUri + "symlink"));
+        Path symlinkTarget = Paths.get(new URI(mountUri + "symlinktarget"));
+        Files.createSymbolicLink(symlinkPath, symlinkTarget);
+        System.out.println("SYMLINK: " + symlinkPath.toString() + " => " + Files.readSymbolicLink(symlinkPath));
 
         Path copyPath = glusterPath.resolveSibling("copy");
 //        Files.createFile(copyPath, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-rw-rw-")));
