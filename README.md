@@ -108,3 +108,9 @@ Until further notice (made here and in LICENSE.txt) this project is licensed und
 3-clause BSD license, as written in LICENSE.txt.
 
 The licensing is likely to change in the near future as the project matures.
+
+# Acknowledgements
+
+- May G. & Ian H. for their hard work & dedication to improving this project. (Code contributions will be merged soon.)
+- Atlassian for providing a free license for their most excellent Java code quality analyzer, [Clover](https://www.atlassian.com/software/clover/overview).
+- All the open source projects we depend on: [GlusterFS](http://gluster.org/), [HawtJNI](https://github.com/fusesource/hawtjni), [Lombok](http://projectlombok.org/), [JUnit](http://junit.org/), [Mockito](https://code.google.com/p/mockito/), [PowerMock](https://code.google.com/p/powermock/), [TestNG](http://testng.org/doc/index.html), [sonarqube](http://www.sonarqube.org/), [Hadoop](http://hadoop.apache.org/) (whose Glob to Regex converter we borrowed), [Maven](http://maven.apache.org/) and all the Maven plugins, and of course [Java](https://www.java.com/).
