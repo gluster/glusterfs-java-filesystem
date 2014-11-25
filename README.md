@@ -65,6 +65,7 @@ To run:
 
 ### TODO:
 
+- Create hard links
 - Delete files
 - Copy files
 - Align project versions with glusterfs (this project & libgfapi-jni)
