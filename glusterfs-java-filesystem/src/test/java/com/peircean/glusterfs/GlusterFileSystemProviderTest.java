@@ -345,24 +345,93 @@ public class GlusterFileSystemProviderTest extends TestCase {
         GlusterFileAttributes.fromStat(stat);
     }
 
-    //    @Test(expected = NoSuchFileException.class)
+    @Test(expected = NoSuchFileException.class)
     public void testDelete_whenFileDoesNotExist() throws IOException {
+        mockStatic(Files.class);
+        when(Files.exists(mockPath)).thenReturn(false);
+
+        provider.delete(mockPath);
     }
 
-    //    @Test
+    @Test(expected = DirectoryNotEmptyException.class)
     public void testDelete_whenDirectoryIsNotEmpty() throws IOException {
+        mockStatic(Files.class);
+        when(Files.exists(mockPath)).thenReturn(true);
+        when(Files.isDirectory(mockPath)).thenReturn(true);
+        doReturn(false).when(provider).directoryIsEmpty(mockPath);
+
+        provider.delete(mockPath);
     }
 
-    //    @Test(expected = IOException.class)
-    public void testDelete_whenFailing() throws IOException {
-//        long volptr = 1234l;
-//        String path = "/foo";
-//        doReturn(volptr).when(mockFileSystem).getVolptr();
-//        doReturn(mockFileSystem).when(mockPath).getFileSystem();
-//        PowerMockito.doReturn(path).when(mockPath).getString();
-//        PowerMockito.mockStatic(GLFS.class);
-//        when(GLFS.glfs_unlink(volptr, path)).thenReturn(-1);
-//        provider.delete(mockPath);
+    @Test(expected = IOException.class)
+    public void testDelete_whenDirectoryAndFailing() throws IOException {
+        delete_helper(true, false);
+    }
+
+    @Test(expected = IOException.class)
+    public void testDelete_whenFileAndFailing() throws IOException {
+        delete_helper(false, false);
+    }
+
+    @Test
+    public void testDelete_whenFileAndSuccess() throws IOException {
+        delete_helper(false, true);
+    }
+
+    @Test
+    public void testDelete_whenDirectoryAndSuccess() throws IOException {
+        delete_helper(true, true);
+    }
+
+    private void delete_helper(boolean directory, boolean success) throws IOException {
+        long volptr = 1234L;
+        String path = "/foo";
+
+        mockStatic(Files.class);
+        mockStatic(GLFS.class);
+
+        when(Files.exists(mockPath)).thenReturn(true);
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+        doReturn(path).when(mockPath).toString();
+
+        if (directory) {
+            when(Files.isDirectory(mockPath)).thenReturn(true);
+            doReturn(true).when(provider).directoryIsEmpty(mockPath);
+            if (success) {
+                when(GLFS.glfs_rmdir(volptr, path)).thenReturn(0);
+            } else {
+                when(GLFS.glfs_rmdir(volptr, path)).thenReturn(-1);
+            }
+        } else {
+            when(Files.isDirectory(mockPath)).thenReturn(false);
+            if (success) {
+                when(GLFS.glfs_unlink(volptr, path)).thenReturn(0);
+            } else {
+                when(GLFS.glfs_unlink(volptr, path)).thenReturn(-1);
+            }
+        }
+
+        provider.delete(mockPath);
+
+        if (success) {
+            verifyStatic();
+            Files.exists(mockPath);
+            verifyStatic();
+            Files.isDirectory(mockPath);
+
+            verify(mockPath).getFileSystem();
+            verify(mockFileSystem).getVolptr();
+
+            if (directory) {
+                verify(provider).directoryIsEmpty(mockPath);
+                verifyStatic();
+                GLFS.glfs_rmdir(volptr, path);
+            } else {
+                verifyStatic();
+                GLFS.glfs_unlink(volptr, path);
+            }
+        }
     }
 
     @Test
