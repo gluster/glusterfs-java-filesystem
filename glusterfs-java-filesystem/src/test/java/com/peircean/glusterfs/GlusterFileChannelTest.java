@@ -146,14 +146,6 @@ public class GlusterFileChannelTest extends TestCase {
 	}
 
 	@Test
-	public void testParseAttributes() {
-		Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwxrwxrwx");
-		FileAttribute<Set<PosixFilePermission>> attribute = PosixFilePermissions.asFileAttribute(permissions);
-		int mode = GlusterFileAttributes.parseAttrs(attribute);
-		assertEquals(0777, mode);
-	}
-
-	@Test
 	public void testRead1Arg() throws IOException {
 		doNothing().when(channel).guardClosed();
 		long fileptr = 1234l;
