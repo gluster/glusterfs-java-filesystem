@@ -34,7 +34,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({GLFS.class, GlusterFileChannel.class})
+@PrepareForTest({GLFS.class, GlusterFileChannel.class, GlusterFileAttributes.class})
 public class GlusterFileChannelTest extends TestCase {
 
 	@Mock
