@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import com.peircean.libgfapi_jni.internal.structs.stat;
 import org.junit.Test;
 
+import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -51,6 +52,14 @@ public class GlusterFileAttributesTest extends TestCase {
         Set<PosixFilePermission> expected = PosixFilePermissions.fromString("rwxrwxrwx");
         Set<PosixFilePermission> permissions = attrib.permissions();
         assertEquals(expected, permissions);
+    }
+
+    @Test
+    public void testParseAttributes() {
+        Set<PosixFilePermission> posixFilePermissions = PosixFilePermissions.fromString("rwxrwxrwx");
+        FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(posixFilePermissions);
+        int mode = GlusterFileAttributes.parseAttrs(attrs);
+        assertEquals(0777, mode);
     }
 
     @Test
