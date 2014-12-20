@@ -21,8 +21,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -826,5 +825,34 @@ public class GlusterFileSystemProviderTest extends TestCase {
         
         verifyStatic();
         GLFS.glfs_symlink(volptr, targetpathString, mockpathString);
+    }
+
+    @Test
+    public void testGetFileStore_whenFileExists() throws IOException {
+        mockStatic(Files.class);
+        when(Files.exists(mockPath)).thenReturn(true);
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+
+        GlusterFileStore fileStore = new GlusterFileStore(mockFileSystem);
+        List<FileStore> stores = new ArrayList<>();
+        stores.add(fileStore);
+        Iterable<FileStore> iterable = Collections.unmodifiableList(stores);
+
+        doReturn(iterable).when(mockFileSystem).getFileStores();
+        FileStore retFileStore = provider.getFileStore(mockPath);
+
+        assertEquals(retFileStore, fileStore);
+
+        verify(mockPath).getFileSystem();
+        verify(mockFileSystem).getFileStores();
+        verifyStatic();
+        Files.exists(mockPath);
+    }
+
+    @Test(expected = NoSuchFileException.class)
+    public void testGetFileStore_whenFileDoesNotExist() throws IOException {
+        mockStatic(Files.class);
+        when(Files.exists(mockPath)).thenReturn(false);
+        provider.getFileStore(mockPath);
     }
 }
