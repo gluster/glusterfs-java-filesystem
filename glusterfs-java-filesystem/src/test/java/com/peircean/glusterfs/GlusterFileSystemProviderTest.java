@@ -1006,4 +1006,36 @@ public class GlusterFileSystemProviderTest extends TestCase {
         verifyStatic();
         Files.exists(mockPath);
     }
+
+    @Test
+    public void testDirectoryIsEmpty_whenEmpty() throws Exception {
+        directoryIsEmpty_helper(true);
+    }
+
+    @Test
+    public void testDirectoryIsEmpty_whenNotEmpty() throws Exception {
+        directoryIsEmpty_helper(false);
+    }
+
+    private void directoryIsEmpty_helper(boolean empty) throws Exception {
+        doReturn(mockStream).when(provider).newDirectoryStream(mockPath, null);
+        doReturn(mockIterator).when(mockStream).iterator();
+        if (empty) {
+            doReturn(false).when(mockIterator).hasNext();
+        } else {
+            doReturn(true).when(mockIterator).hasNext();
+        }
+
+        boolean result = provider.directoryIsEmpty(mockPath);
+
+        if (empty) {
+            assertTrue(result);
+        } else {
+            assertFalse(result);
+        }
+
+        verify(provider).newDirectoryStream(mockPath, null);
+        verify(mockStream).iterator();
+        verify(mockIterator).hasNext();
+    }
 }
