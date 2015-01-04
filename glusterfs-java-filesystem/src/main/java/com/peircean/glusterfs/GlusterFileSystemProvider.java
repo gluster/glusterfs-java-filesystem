@@ -249,9 +249,38 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
         GLFS.glfs_rename(((GlusterFileSystem) fileSystem).getVolptr(), ((GlusterPath) path).getString(), ((GlusterPath) path2).getString());
     }
 
+    void guardFileExists(Path path) throws NoSuchFileException {
+        if (!Files.exists(path)) {
+            throw new NoSuchFileException(path.toString());
+        }
+    }
+
     @Override
     public boolean isSameFile(Path path, Path path2) throws IOException {
-        return false;
+        if (path.equals(path2)) {
+            return true;
+        }
+        if (!path.getFileSystem().equals(path2.getFileSystem())) { //if file system differs, then we don't need to check provider; we know the files differ
+            return false;
+        }
+        guardFileExists(path);
+        guardFileExists(path2);
+
+        stat stat1 = statPath(path);
+        stat stat2 = statPath(path2);
+
+        return stat1.st_ino == stat2.st_ino;
+    }
+
+    stat statPath(Path path) throws IOException {
+        stat stat = new stat();
+        String pathString = ((GlusterPath) path).getString();
+        int ret = GLFS.glfs_stat(((GlusterFileSystem) path.getFileSystem()).getVolptr(),
+                pathString, stat);
+        if (ret != 0) {
+            throw new IOException("Stat failed for " + pathString);
+        }
+        return stat;
     }
 
     @Override
@@ -261,7 +290,11 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileStore getFileStore(Path path) throws IOException {
-        return null;
+        if (Files.exists(path)) {
+            return path.getFileSystem().getFileStores().iterator().next();
+        } else {
+            throw new NoSuchFileException(path.toString());
+        }
     }
 
     @Override
