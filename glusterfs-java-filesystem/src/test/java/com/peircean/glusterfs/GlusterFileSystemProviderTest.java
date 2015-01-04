@@ -1083,22 +1083,4 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
         verifyNew(stat.class).withNoArguments();
     }
-
-    @Test(expected = NoSuchFileException.class)
-    public void testGuardFileExists_whenDoesNotExist() throws NoSuchFileException {
-        mockStatic(Files.class);
-        PowerMockito.when(Files.exists(mockPath)).thenReturn(false);
-        provider.guardFileExists(mockPath);
-    }
-
-    @Test
-    public void testGuardFileExists_whenDoesExist() throws NoSuchFileException {
-        mockStatic(Files.class);
-        PowerMockito.when(Files.exists(mockPath)).thenReturn(true);
-
-        provider.guardFileExists(mockPath);
-
-        verifyStatic();
-        Files.exists(mockPath);
-    }
 }
