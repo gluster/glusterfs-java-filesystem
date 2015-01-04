@@ -68,7 +68,7 @@ public class GlusterFileChannel extends FileChannel {
 		this.options = options;
 
 		int flags = parseOptions(options);
-		int mode = parseAttrs(attrs);
+		int mode = GlusterFileAttributes.parseAttrs(attrs);
 
 		String pathString = path.toUri().getPath();
 		boolean createNew = options.contains(StandardOpenOption.CREATE_NEW);
@@ -87,18 +87,6 @@ public class GlusterFileChannel extends FileChannel {
 		if (0 >= fileptr) {
 			throw new IOException("Unable to create or open file '" + pathString + "' on volume '" + fileSystem.toString() + "'");
 		}
-	}
-
-	int parseAttrs(FileAttribute<?>... attrs) {
-		int mode = 0;
-		for (FileAttribute a : attrs) {
-			for (PosixFilePermission p : (Set<PosixFilePermission>) a.value()) {
-				if (perms.keySet().contains(p)) {
-					mode |= perms.get(p);
-				}
-			}
-		}
-		return mode;
 	}
 
 	int parseOptions(Set<? extends OpenOption> options) {

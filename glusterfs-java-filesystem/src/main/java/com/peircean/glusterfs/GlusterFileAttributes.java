@@ -11,18 +11,21 @@ import java.util.Set;
 
 @Data
 public class GlusterFileAttributes implements PosixFileAttributes {
-    private static Map<Integer, PosixFilePermission> perms = new HashMap<Integer, PosixFilePermission>();
+    private static Map<Integer, PosixFilePermission> modeToPerms = new HashMap<Integer, PosixFilePermission>();
+    private static Map<PosixFilePermission, Integer> permsToMode;
 
     static {
-        perms.put(0001, PosixFilePermission.OTHERS_EXECUTE);
-        perms.put(0002, PosixFilePermission.OTHERS_WRITE);
-        perms.put(0004, PosixFilePermission.OTHERS_READ);
-        perms.put(0010, PosixFilePermission.GROUP_EXECUTE);
-        perms.put(0020, PosixFilePermission.GROUP_WRITE);
-        perms.put(0040, PosixFilePermission.GROUP_READ);
-        perms.put(0100, PosixFilePermission.OWNER_EXECUTE);
-        perms.put(0200, PosixFilePermission.OWNER_WRITE);
-        perms.put(0400, PosixFilePermission.OWNER_READ);
+        modeToPerms.put(0001, PosixFilePermission.OTHERS_EXECUTE);
+        modeToPerms.put(0002, PosixFilePermission.OTHERS_WRITE);
+        modeToPerms.put(0004, PosixFilePermission.OTHERS_READ);
+        modeToPerms.put(0010, PosixFilePermission.GROUP_EXECUTE);
+        modeToPerms.put(0020, PosixFilePermission.GROUP_WRITE);
+        modeToPerms.put(0040, PosixFilePermission.GROUP_READ);
+        modeToPerms.put(0100, PosixFilePermission.OWNER_EXECUTE);
+        modeToPerms.put(0200, PosixFilePermission.OWNER_WRITE);
+        modeToPerms.put(0400, PosixFilePermission.OWNER_READ);
+
+        permsToMode = invertModeMap(modeToPerms);
     }
 
     private final int mode, uid, gid;
@@ -31,6 +34,32 @@ public class GlusterFileAttributes implements PosixFileAttributes {
     public static GlusterFileAttributes fromStat(stat stat) {
         return new GlusterFileAttributes(stat.st_mode, stat.st_uid, stat.st_gid, stat.st_size,
                 stat.atime, stat.ctime, stat.mtime, stat.st_ino);
+    }
+
+    public static int parseAttrs(FileAttribute<?>... attrs) {
+        int mode = 0;
+        for (FileAttribute a : attrs) {
+            for (PosixFilePermission p : (Set<PosixFilePermission>) a.value()) {
+
+                Integer perm = permsToMode.get(p);
+
+                if (null != perm) {
+                    mode |= perm;
+                }
+            }
+        }
+        return mode;
+    }
+
+    private static Map<PosixFilePermission, Integer> invertModeMap(Map<Integer, PosixFilePermission> modeToPerms) {
+
+        HashMap<PosixFilePermission, Integer> permsToMode = new HashMap<>();
+
+        for(Map.Entry<Integer, PosixFilePermission> entry : modeToPerms.entrySet()) {
+            permsToMode.put(entry.getValue(), entry.getKey());
+        }
+
+        return permsToMode;
     }
 
     @Override
@@ -56,9 +85,9 @@ public class GlusterFileAttributes implements PosixFileAttributes {
     @Override
     public Set<PosixFilePermission> permissions() {
         Set<PosixFilePermission> permissions = new HashSet<PosixFilePermission>();
-        for (int mask : perms.keySet()) {
+        for (int mask : modeToPerms.keySet()) {
             if (mask == (mode & mask)) {
-                permissions.add(perms.get(mask));
+                permissions.add(modeToPerms.get(mask));
             }
         }
         return permissions;
