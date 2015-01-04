@@ -164,12 +164,10 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void copy(Path path, Path path2, CopyOption... copyOptions) throws IOException {
-        if (!path.isAbsolute() || !path2.isAbsolute()) {
-            throw new UnsupportedOperationException("Relative paths not supported: " + path + " -> " + path2);
-        }
-        if (!Files.exists(path)) {
-            throw new NoSuchFileException(path.toString());
-        }
+        guardAbsolutePath(path);
+        guardAbsolutePath(path2);
+        guardFileExists(path);
+
         boolean targetExists = Files.exists(path2);
         if (targetExists && isSameFile(path, path2)) {
             return;
@@ -275,6 +273,12 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     void guardFileExists(Path path) throws NoSuchFileException {
         if (!Files.exists(path)) {
             throw new NoSuchFileException(path.toString());
+        }
+    }
+
+    void guardAbsolutePath(Path p) {
+        if (!p.isAbsolute()) {
+            throw new UnsupportedOperationException("Relative paths not supported: " + p);
         }
     }
 
