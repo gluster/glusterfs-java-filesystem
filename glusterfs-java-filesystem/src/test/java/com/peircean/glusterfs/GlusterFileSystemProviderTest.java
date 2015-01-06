@@ -840,37 +840,6 @@ public class GlusterFileSystemProviderTest extends TestCase {
         GLFS.glfs_rename(volptr, srcPath, dstPath);
     }
 
-    @Test(expected = NoSuchFileException.class)
-    public void testGuardFileExists_whenDoesNotExist() throws NoSuchFileException {
-        mockStatic(Files.class);
-        PowerMockito.when(Files.exists(mockPath)).thenReturn(false);
-        provider.guardFileExists(mockPath);
-    }
-
-    @Test
-    public void testGuardFileExists_whenDoesExist() throws NoSuchFileException {
-        mockStatic(Files.class);
-        PowerMockito.when(Files.exists(mockPath)).thenReturn(true);
-
-        provider.guardFileExists(mockPath);
-
-        verifyStatic();
-        Files.exists(mockPath);
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testGuardAbsolutePath_whenRelative() {
-        doReturn(false).when(mockPath).isAbsolute();
-        provider.guardAbsolutePath(mockPath);
-    }
-
-    @Test
-    public void testGuardAbsolutePath_whenAbsolute() {
-        doReturn(true).when(mockPath).isAbsolute();
-        provider.guardAbsolutePath(mockPath);
-        verify(mockPath).isAbsolute();
-    }
-
     @Test(expected = NotDirectoryException.class)
     public void testNewDirectoryStream_whenNotDirectory() throws IOException {
         mockStatic(Files.class);
