@@ -150,7 +150,24 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void createDirectory(Path path, FileAttribute<?>... fileAttributes) throws IOException {
+        if (Files.exists(path)) {
+            throw new FileAlreadyExistsException(path.toString());
+        }
+        if (!Files.exists(path.getParent())) {
+            throw new IOException();
+        }
 
+        int mode = 0775;
+
+        if (fileAttributes.length > 0) {
+            mode = GlusterFileAttributes.parseAttrs(fileAttributes);
+        }
+
+        int ret = GLFS.glfs_mkdir(((GlusterFileSystem) path.getFileSystem()).getVolptr(), path.toString(), mode);
+
+        if (ret < 0) {
+            throw new IOException(path.toString());
+        }
     }
 
     @Override
