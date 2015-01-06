@@ -4,7 +4,7 @@
 
     <groupId>com.peircean.glusterfs</groupId>
     <artifactId>glusterfs-java-filesystem-project</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5-SNAPSHOT</version>
     <modules>
         <module>glusterfs-java-filesystem</module>
         <module>glusterfs-java-filesystem-example</module>
