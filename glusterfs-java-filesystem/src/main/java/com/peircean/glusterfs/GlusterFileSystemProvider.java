@@ -243,6 +243,13 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void move(Path path, Path path2, CopyOption... copyOptions) throws IOException {
+        guardAbsolutePath(path);
+        guardAbsolutePath(path2);
+        guardFileExists(path);
+        if (Files.exists(path2) && isSameFile(path, path2)) {
+            return;
+        }
+
         boolean overwrite = false;
         for (CopyOption co : copyOptions) {
             if (StandardCopyOption.ATOMIC_MOVE.equals(co)) {
@@ -252,15 +259,17 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
                 overwrite = true;
             }
         }
-        boolean exists = Files.exists(path2);
-        if (!overwrite && exists) {
+
+        FileSystem fileSystem = path.getFileSystem();
+
+        if (!overwrite && Files.exists(path2)) {
             throw new FileAlreadyExistsException("Target " + path2 + " exists and REPLACE_EXISTING not specified");
-        } else if (Files.isDirectory(path2) && !directoryIsEmpty(path2)) {
+        }
+        if (Files.isDirectory(path2) && !directoryIsEmpty(path2)) {
             throw new DirectoryNotEmptyException("Target not empty: " + path2);
         }
-        FileSystem fileSystem = path.getFileSystem();
         if (!fileSystem.equals(path2.getFileSystem())) {
-            throw new UnsupportedOperationException("Can not move file to a different GlusterFS volume");
+            throw new UnsupportedOperationException("Can not move file to a different file system");
         }
         GLFS.glfs_rename(((GlusterFileSystem) fileSystem).getVolptr(), ((GlusterPath) path).getString(), ((GlusterPath) path2).getString());
     }
@@ -268,6 +277,12 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     void guardFileExists(Path path) throws NoSuchFileException {
         if (!Files.exists(path)) {
             throw new NoSuchFileException(path.toString());
+        }
+    }
+
+    void guardAbsolutePath(Path p) {
+        if (!p.isAbsolute()) {
+            throw new UnsupportedOperationException("Relative paths not supported: " + p);
         }
     }
 
