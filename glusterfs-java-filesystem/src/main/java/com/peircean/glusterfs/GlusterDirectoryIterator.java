@@ -42,16 +42,19 @@ class GlusterDirectoryIterator<T> implements Iterator<GlusterPath> {
     }
 
     void advance() {
-        current = new dirent();
-        long nextPtr = dirent.malloc(dirent.SIZE_OF);
-        GLFS.glfs_readdir_r(stream.getDirHandle(), current, nextPtr);
+        String name;
+        do {
+            current = new dirent();
+            long nextPtr = dirent.malloc(dirent.SIZE_OF);
+            GLFS.glfs_readdir_r(stream.getDirHandle(), current, nextPtr);
 
-        next = new dirent();
-        dirent.memmove(next, nextPtr, dirent.SIZE_OF);
-        dirent.free(nextPtr);
+            next = new dirent();
+            dirent.memmove(next, nextPtr, dirent.SIZE_OF);
+            dirent.free(nextPtr);
 
-        String name = current.getName();
-        nextPath = (GlusterPath) stream.getDir().resolve(name);
+            name = current.getName();
+            nextPath = (GlusterPath) stream.getDir().resolve(name);
+        } while (name.equals(".") || name.equals(".."));
     }
 
     @Override
