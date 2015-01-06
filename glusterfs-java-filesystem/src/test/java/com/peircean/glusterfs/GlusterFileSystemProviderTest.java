@@ -565,28 +565,95 @@ public class GlusterFileSystemProviderTest extends TestCase {
         assertEquals(buf.f_bsize * buf.f_bfree, unallocatedSpace);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
-    public void testCopyFile_whenUnsupportedOption() throws IOException {
-        CopyOption copyOption = StandardCopyOption.ATOMIC_MOVE;
-        provider.copy(mockPath, targetPath, copyOption);
+    @Test
+    public void testCopyFile_whenTargetExists_AndIsSameFile() throws IOException {
+        doNothing().when(provider).guardFileExists(mockPath);
+        doNothing().when(provider).guardAbsolutePath(mockPath);
+        doNothing().when(provider).guardAbsolutePath(targetPath);
+
+        mockStatic(Files.class);
+        when(Files.exists(targetPath)).thenReturn(true);
+        doReturn(true).when(provider).isSameFile(mockPath, targetPath);
+
+        provider.copy(mockPath, targetPath);
+
+        verify(provider).guardFileExists(mockPath);
+        verify(provider).guardAbsolutePath(mockPath);
+        verify(provider).guardAbsolutePath(targetPath);
+        verifyStatic();
+        Files.exists(targetPath);
+        verify(provider).isSameFile(mockPath, targetPath);
+        Mockito.verifyNoMoreInteractions(mockPath, targetPath);
+        PowerMockito.verifyNoMoreInteractions(Files.class);
     }
 
+    @Test(expected = UnsupportedOperationException.class)
+    public void testCopyFile_whenUnsupportedOption() throws IOException {
+        doNothing().when(provider).guardFileExists(mockPath);
+        doNothing().when(provider).guardAbsolutePath(mockPath);
+        doNothing().when(provider).guardAbsolutePath(targetPath);
+
+        mockStatic(Files.class);
+        when(Files.exists(targetPath)).thenReturn(false);
+
+        provider.copy(mockPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
+    }
 
     @Test(expected = FileAlreadyExistsException.class)
     public void testCopyFile_whenTargetExists_andNoReplaceExisting() throws IOException {
-        Path targetPath = mockPath.resolveSibling("copy");
+        doNothing().when(provider).guardFileExists(mockPath);
+        doNothing().when(provider).guardAbsolutePath(mockPath);
+        doNothing().when(provider).guardAbsolutePath(targetPath);
+
         mockStatic(Files.class);
         when(Files.exists(targetPath)).thenReturn(true);
+        doReturn(false).when(provider).isSameFile(mockPath, targetPath);
+
         provider.copy(mockPath, targetPath);
     }
 
     @Test(expected = DirectoryNotEmptyException.class)
     public void testCopyFile_whenTargetDirNotEmpty_andReplaceExisting() throws IOException {
-        Path targetPath = mockPath.resolveSibling("copy");
+        doNothing().when(provider).guardFileExists(mockPath);
+        doNothing().when(provider).guardAbsolutePath(mockPath);
+        doNothing().when(provider).guardAbsolutePath(targetPath);
+
         mockStatic(Files.class);
+        when(Files.exists(targetPath)).thenReturn(true);
+        doReturn(false).when(provider).isSameFile(mockPath, targetPath);
         when(Files.isDirectory(targetPath)).thenReturn(true);
         doReturn(false).when(provider).directoryIsEmpty(targetPath);
+
         provider.copy(mockPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @Test
+    public void testCopyFile_whenSourceIsDir() throws IOException {
+        doNothing().when(provider).guardFileExists(mockPath);
+        doNothing().when(provider).guardAbsolutePath(mockPath);
+        doNothing().when(provider).guardAbsolutePath(targetPath);
+
+        mockStatic(Files.class);
+        when(Files.exists(targetPath)).thenReturn(false);
+        when(Files.isDirectory(targetPath)).thenReturn(false);
+        when(Files.isDirectory(mockPath)).thenReturn(true);
+        when(Files.createDirectory(targetPath)).thenReturn(targetPath);
+
+        provider.copy(mockPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+        verify(provider).guardFileExists(mockPath);
+        verify(provider).guardAbsolutePath(mockPath);
+        verify(provider).guardAbsolutePath(targetPath);
+        verifyStatic();
+        Files.exists(targetPath);
+        verifyStatic();
+        Files.isDirectory(targetPath);
+        verifyStatic();
+        Files.isDirectory(mockPath);
+        verifyStatic();
+        Files.createDirectory(targetPath);
+        Mockito.verifyNoMoreInteractions(mockPath, targetPath);
+        PowerMockito.verifyNoMoreInteractions(Files.class);
     }
 
     @Test
@@ -600,27 +667,43 @@ public class GlusterFileSystemProviderTest extends TestCase {
     }
 
     void helperCopyFile(boolean attributes) throws IOException {
-        Path targetPath = mockPath.resolveSibling("copy");
+        doNothing().when(provider).guardFileExists(mockPath);
+        doNothing().when(provider).guardAbsolutePath(mockPath);
+        doNothing().when(provider).guardAbsolutePath(targetPath);
+
         mockStatic(Files.class);
-        when(Files.isDirectory(targetPath)).thenReturn(false);
         when(Files.exists(targetPath)).thenReturn(false);
-        when(Files.createFile(targetPath)).thenReturn(targetPath);
+        when(Files.isDirectory(targetPath)).thenReturn(false);
+        when(Files.isDirectory(mockPath)).thenReturn(false);
+
+        when(Files.createFile(any(GlusterPath.class), any(FileAttribute.class))).thenReturn(targetPath);
         doNothing().when(provider).copyFileContent(mockPath, targetPath);
+
         if (attributes) {
             doNothing().when(provider).copyFileAttributes(mockPath, targetPath);
-            provider.copy(mockPath, targetPath, StandardCopyOption.COPY_ATTRIBUTES);
+            provider.copy(mockPath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+
         } else {
-            provider.copy(mockPath, targetPath);
+            provider.copy(mockPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
+        verify(provider).guardFileExists(mockPath);
+        verify(provider).guardAbsolutePath(mockPath);
+        verify(provider).guardAbsolutePath(targetPath);
+        verifyStatic();
+        Files.exists(targetPath);
+        verifyStatic();
+        Files.isDirectory(targetPath);
+        verifyStatic();
+        Files.isDirectory(mockPath);
+        verifyStatic();
+        Files.createFile(any(GlusterPath.class), any(FileAttribute.class));
         verify(provider).copyFileContent(mockPath, targetPath);
         if (attributes) {
             verify(provider).copyFileAttributes(mockPath, targetPath);
         }
-        verifyStatic();
-        Files.isDirectory(targetPath);
-        Files.exists(targetPath);
-        Files.createFile(targetPath);
+        Mockito.verifyNoMoreInteractions(mockPath, targetPath);
+        PowerMockito.verifyNoMoreInteractions(Files.class);
     }
 
     @Test
@@ -1215,5 +1298,36 @@ public class GlusterFileSystemProviderTest extends TestCase {
         GLFS.glfs_stat(volptr, pathString, stat);
 
         verifyNew(stat.class).withNoArguments();
+    }
+
+    @Test(expected = NoSuchFileException.class)
+    public void testGuardFileExists_whenDoesNotExist() throws NoSuchFileException {
+        mockStatic(Files.class);
+        PowerMockito.when(Files.exists(mockPath)).thenReturn(false);
+        provider.guardFileExists(mockPath);
+    }
+
+    @Test
+    public void testGuardFileExists_whenDoesExist() throws NoSuchFileException {
+        mockStatic(Files.class);
+        PowerMockito.when(Files.exists(mockPath)).thenReturn(true);
+
+        provider.guardFileExists(mockPath);
+
+        verifyStatic();
+        Files.exists(mockPath);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testGuardAbsolutePath_whenRelative() {
+        doReturn(false).when(mockPath).isAbsolute();
+        provider.guardAbsolutePath(mockPath);
+    }
+
+    @Test
+    public void testGuardAbsolutePath_whenAbsolute() {
+        doReturn(true).when(mockPath).isAbsolute();
+        provider.guardAbsolutePath(mockPath);
+        verify(mockPath).isAbsolute();
     }
 }
