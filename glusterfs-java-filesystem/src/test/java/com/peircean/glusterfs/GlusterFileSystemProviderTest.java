@@ -16,11 +16,13 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 
 import static org.mockito.Mockito.doNothing;
@@ -29,6 +31,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.*;
+import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>
@@ -342,6 +345,28 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
         verifyStatic();
         GlusterFileAttributes.fromStat(stat);
+    }
+
+    @Test
+    public void testDirectoryIsEmpty_whenNotEmpty() throws IOException {
+        doReturn(mockStream).when(provider).newDirectoryStream(mockPath, null);
+        doReturn(mockIterator).when(mockStream).iterator();
+        doReturn(true).when(mockIterator).hasNext();
+
+        boolean ret = provider.directoryIsEmpty(mockPath);
+
+        assertEquals(ret, false);
+    }
+
+    @Test
+    public void testDirectoryIsEmpty() throws IOException {
+        doReturn(mockStream).when(provider).newDirectoryStream(mockPath, null);
+        doReturn(mockIterator).when(mockStream).iterator();
+        doReturn(false).when(mockIterator).hasNext();
+
+        boolean ret = provider.directoryIsEmpty(mockPath);
+
+        assertEquals(ret, true);
     }
 
     @Test(expected = NoSuchFileException.class)
@@ -707,6 +732,114 @@ public class GlusterFileSystemProviderTest extends TestCase {
     }
 
     @Test
+    public void testCopyFileAttributes_whenNotDefaultPermissions() throws IOException {
+        copyFileAttributesHelper(false);
+    }
+
+    @Test
+    public void testCopyFileAttributes_whenDefaultPermissions() throws IOException {
+        copyFileAttributesHelper(true);
+    }
+
+    @Test(expected = IOException.class)
+    public void testCopyFileAttributes_whenStatFails() throws IOException {
+        copyFileAttributesFailureHelper(true);
+    }
+
+    @Test(expected = IOException.class)
+    public void testCopyFileAttributes_whenChmodFails() throws IOException {
+        copyFileAttributesFailureHelper(false);
+    }
+
+    private void copyFileAttributesHelper(boolean defaultPermissions) throws IOException {
+        stat blankStat = new stat();
+        long volptr = 1234L;
+        mockStatic(GLFS.class);
+        when(GLFS.glfs_stat(volptr, mockPath.toString(), blankStat)).thenReturn(0);
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+
+        if (!defaultPermissions) {
+            when(GLFS.glfs_chmod(volptr, mockPath.toString(), blankStat.st_mode)).thenReturn(0);
+        }
+
+        provider.copyFileAttributes(mockPath, mockPath);
+
+        verifyStatic();
+        GLFS.glfs_stat(volptr, mockPath.toString(), blankStat);
+        verify(mockFileSystem).getVolptr();
+        verify(mockPath).getFileSystem();
+
+        if (!defaultPermissions) {
+            verifyStatic();
+            GLFS.glfs_chmod(volptr, mockPath.toString(), blankStat.st_mode);
+        } else {
+            verifyNoMoreInteractions(mockPath);
+        }
+    }
+
+    private void copyFileAttributesFailureHelper(boolean statFailed) throws IOException {
+        stat blankStat = new stat();
+        long volptr = 1234L;
+        mockStatic(GLFS.class);
+        doReturn(mockFileSystem).when(mockPath).getFileSystem();
+        doReturn(volptr).when(mockFileSystem).getVolptr();
+
+        when(GLFS.glfs_stat(volptr, mockPath.toString(), blankStat)).thenReturn(statFailed ? -1 : 0);
+
+        when(GLFS.glfs_chmod(volptr, mockPath.toString(), blankStat.st_mode)).thenReturn(statFailed ? 0 : -1);
+
+        provider.copyFileAttributes(mockPath, mockPath);
+    }
+
+    @Test
+    public void testCopyFileContent() throws IOException {
+        Set<StandardOpenOption> options = new HashSet<>();
+        options.add(StandardOpenOption.READ);
+
+        byte[] bytes = new byte[8192];
+        doReturn(mockChannel).when(provider).newFileChannel(mockPath, options);
+        when(mockChannel.read(any(ByteBuffer.class))).thenReturn(10, 10, 0);
+
+        mockStatic(Arrays.class);
+        when(Arrays.copyOf(bytes, 10)).thenReturn(bytes);
+        mockStatic(Files.class);
+        when(Files.write(mockPath, bytes, StandardOpenOption.TRUNCATE_EXISTING)).thenReturn(mockPath);
+        when(Files.write(mockPath, bytes, StandardOpenOption.APPEND)).thenReturn(mockPath);
+
+        doNothing().when(mockChannel).close();
+
+        provider.copyFileContent(mockPath, mockPath);
+
+        verify(mockChannel).close();
+        verifyStatic();
+        Files.write(mockPath, bytes, StandardOpenOption.APPEND);
+        verifyStatic();
+        Files.write(mockPath, bytes, StandardOpenOption.TRUNCATE_EXISTING);
+        verifyStatic(times(2));
+        Arrays.copyOf(bytes, 10);
+        verify(mockChannel, times(3)).read(any(ByteBuffer.class));
+        verify(provider).newFileChannel(mockPath, options);
+    }
+
+    @Test
+    public void testCopyFileContent_whenNothingRead() throws IOException {
+        Set<StandardOpenOption> options = new HashSet<>();
+        options.add(StandardOpenOption.READ);
+        doReturn(mockChannel).when(provider).newFileChannel(mockPath, options);
+        when(mockChannel.read(any(ByteBuffer.class))).thenReturn(0);
+        doNothing().when(mockChannel).close();
+
+        provider.copyFileContent(mockPath, mockPath);
+
+        verify(mockChannel).close();
+        verify(mockChannel).read(any(ByteBuffer.class));
+        verify(provider).newFileChannel(mockPath, options);
+
+        verifyNoMoreInteractions(mockPath);
+    }
+
+    @Test
     public void testMoveFile_whenSameFile() throws IOException {
         mockStatic(Files.class);
         when(Files.exists(targetPath)).thenReturn(true);
@@ -744,7 +877,6 @@ public class GlusterFileSystemProviderTest extends TestCase {
         provider.move(mockPath, targetPath, copyOption);
     }
 
-
     @Test(expected = FileAlreadyExistsException.class)
     public void testMoveFile_whenTargetExists_andNoReplaceExisting() throws IOException {
         mockStatic(Files.class);
@@ -756,7 +888,7 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
         doReturn(false).when(provider).isSameFile(mockPath, targetPath);
         when(Files.exists(targetPath)).thenReturn(true);
-        provider.move(mockPath, targetPath);
+        provider.move(mockPath, targetPath, StandardCopyOption.COPY_ATTRIBUTES);
     }
 
     @Test(expected = DirectoryNotEmptyException.class)
@@ -1063,15 +1195,26 @@ public class GlusterFileSystemProviderTest extends TestCase {
 
     @Test(expected = IOException.class)
     public void testCreateDirectory_whenCannotCreateDirectory() throws IOException {
-        helperCreateDirectory(true);
+        helperCreateDirectory(true, false);
     }
 
     @Test
     public void testCreateDirectory() throws IOException {
-        helperCreateDirectory(false);
+        helperCreateDirectory(false, false);
     }
 
-    private void helperCreateDirectory(boolean errorHappens) throws IOException {
+    @Test
+    public void testCreateDirectory_whenGivenFileAttributes() throws IOException {
+        helperCreateDirectory(false, true);
+    }
+
+    /*
+     * @param errorHappens - used to test the case when an IOException occurs
+     * @param givenFileAttributes - used to test the case when the call to createDirectory includes a set of FileAttributes
+     *
+     * When errorHappens is true, the value of the second parameter doesn't matter.
+     */
+    private void helperCreateDirectory(boolean errorHappens, boolean givenFileAttributes) throws IOException {
         mockStatic(Files.class);
         when(Files.exists(mockPath)).thenReturn(false);
 
@@ -1082,6 +1225,8 @@ public class GlusterFileSystemProviderTest extends TestCase {
         int mode = 0775; //using default file attribute to avoid testing parseAttrs redundantly
         long volptr = 1234L;
         String pathString = "foo";
+        FileAttribute attrs = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-rw-r--"));
+
         doReturn(pathString).when(mockPath).toString();
         doReturn(mockFileSystem).when(mockPath).getFileSystem();
         doReturn(volptr).when(mockFileSystem).getVolptr();
@@ -1092,7 +1237,13 @@ public class GlusterFileSystemProviderTest extends TestCase {
         }
         when(GLFS.glfs_mkdir(volptr, pathString, mode)).thenReturn(ret);
 
-        provider.createDirectory(mockPath);
+        if (givenFileAttributes) {
+            mockStatic(GlusterFileAttributes.class);
+            when(GlusterFileAttributes.parseAttrs(attrs)).thenReturn(mode);
+            provider.createDirectory(mockPath, attrs);
+        } else {
+            provider.createDirectory(mockPath);
+        }
 
         if (!errorHappens) {
             verifyStatic();
@@ -1104,6 +1255,11 @@ public class GlusterFileSystemProviderTest extends TestCase {
             verify(mockPath).getFileSystem();
             verify(mockFileSystem).getVolptr();
             verify(mockPath).getParent();
+
+            if (givenFileAttributes) {
+                verifyStatic();
+                GlusterFileAttributes.parseAttrs(attrs);
+            }
         }
     }
 
