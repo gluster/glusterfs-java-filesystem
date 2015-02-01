@@ -23,7 +23,7 @@ Thanks!
         <dependency>
             <groupId>com.peircean.glusterfs</groupId>
             <artifactId>glusterfs-java-filesystem</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.4</version>
         </dependency>
     </dependencies>
 
@@ -65,9 +65,7 @@ To run:
 
 ### TODO:
 
-- Create hard links
-- Delete files
-- Copy files
+- Replace Example program with formal integration test suite
 - Align project versions with glusterfs (this project & libgfapi-jni)
 - Update watch service to use [libgfchangelog](https://github.com/gluster/glusterfs/blob/master/xlators/features/changelog/lib/examples/c/get-changes.c) (instead of polling)
 - Finish attribute support   
@@ -80,6 +78,9 @@ To run:
 - Finish readSymbolicLink unit tests
 - Publish test coverage report to Coveralls.io   
     [Blocked](https://github.com/trautonen/coveralls-maven-plugin/issues/36) due to use of Atlassian Clover
+- Create hard links
+- Delete files
+- Copy files
 
 ### Completed:
 

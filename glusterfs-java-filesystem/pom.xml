@@ -3,7 +3,7 @@
     <parent>
         <artifactId>glusterfs-java-filesystem-project</artifactId>
         <groupId>com.peircean.glusterfs</groupId>
-        <version>1.0.4-SNAPSHOT</version>
+        <version>1.0.5-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -37,7 +37,7 @@
         <dependency>
             <groupId>com.peircean.libgfapi-jni</groupId>
             <artifactId>libgfapi-all</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
+            <version>1.0.5-SNAPSHOT</version>
         </dependency>
 
         <dependency>

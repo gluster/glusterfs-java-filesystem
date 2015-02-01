@@ -8,17 +8,13 @@ import lombok.Getter;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.DosFileAttributes;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.peircean.libgfapi_jni.internal.GLFS.*;
 
@@ -150,24 +146,61 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void createDirectory(Path path, FileAttribute<?>... fileAttributes) throws IOException {
+        if (Files.exists(path)) {
+            throw new FileAlreadyExistsException(path.toString());
+        }
+        if (!Files.exists(path.getParent())) {
+            throw new IOException();
+        }
 
+        int mode = 0775;
+
+        if (fileAttributes.length > 0) {
+            mode = GlusterFileAttributes.parseAttrs(fileAttributes);
+        }
+
+        int ret = GLFS.glfs_mkdir(((GlusterFileSystem) path.getFileSystem()).getVolptr(), path.toString(), mode);
+
+        if (ret < 0) {
+            throw new IOException(path.toString());
+        }
     }
 
     @Override
     public void delete(Path path) throws IOException {
-//        GlusterFileAttributes glusterFileAttributes = readAttributes(path, GlusterFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-//        if ()
-//
-//        GlusterFileSystem fileSystem = (GlusterFileSystem) path.getFileSystem();
-//        int unl = GLFS.glfs_unlink(fileSystem.getVolptr(), ((GlusterPath) path).getString());
-//        if (-1 == unl) {
-//            throw new IOException();
-//        }
+        if (!Files.exists(path)) {
+            throw new NoSuchFileException(path.toString());
+        }
+        if (Files.isDirectory(path)) {
+            if(!directoryIsEmpty(path)) {
+                throw new DirectoryNotEmptyException(path.toString());
+            }
 
+            int ret = GLFS.glfs_rmdir(((GlusterFileSystem)path.getFileSystem()).getVolptr(), path.toString());
+
+            if (ret < 0) {
+                throw new IOException(path.toString());
+            }
+        } else {
+            int ret = GLFS.glfs_unlink(((GlusterFileSystem) path.getFileSystem()).getVolptr(), path.toString());
+
+            if (ret < 0) {
+                throw new IOException(path.toString());
+            }
+        }
     }
 
     @Override
     public void copy(Path path, Path path2, CopyOption... copyOptions) throws IOException {
+        guardAbsolutePath(path);
+        guardAbsolutePath(path2);
+        guardFileExists(path);
+
+        boolean targetExists = Files.exists(path2);
+        if (targetExists && isSameFile(path, path2)) {
+            return;
+        }
+
         boolean overwrite = false;
         boolean copyAttributes = false;
         for (CopyOption co : copyOptions) {
@@ -181,35 +214,80 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
                 copyAttributes = true;
             }
         }
-        boolean exists = Files.exists(path2);
-        if (!overwrite && exists) {
+
+        if (!overwrite && targetExists) {
             throw new FileAlreadyExistsException("Target " + path2 + " exists and REPLACE_EXISTING not specified");
-        } else if (Files.isDirectory(path2) && !directoryIsEmpty(path2)) {
+        }
+        if (Files.isDirectory(path2) && !directoryIsEmpty(path2)) {
             throw new DirectoryNotEmptyException("Target not empty: " + path2);
         }
-        if (!exists) {
-            Files.createFile(path2);
+        if (Files.isDirectory(path)) {
+            Files.createDirectory(path2);
+        } else {
+            Files.createFile(path2, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-rw-r--")));
+            copyFileContent(path, path2);
+            if (copyAttributes) {
+                copyFileAttributes(path, path2);
+            }
         }
-        copyFileContent(path, path2);
-        if (copyAttributes) {
-            copyFileAttributes(path, path2);
+    }
+
+    void copyFileAttributes(Path path, Path path2) throws IOException {
+        stat stat = new stat();
+        long volptr = ((GlusterFileSystem) path.getFileSystem()).getVolptr();
+        int retStat = glfs_stat(volptr, path.toString(), stat);
+        int retChmod = 0;
+        if (0664 != stat.st_mode) {
+            retChmod = GLFS.glfs_chmod(volptr, path2.toString(), stat.st_mode);
+        }
+        if (retStat < 0 || retChmod < 0) {
+            throw new IOException("Could not copy file attributes.");
         }
     }
 
-    void copyFileAttributes(Path path, Path path2) {
+    void copyFileContent(Path path, Path path2) throws IOException {
+        Set<StandardOpenOption> options = new HashSet<>();
+        options.add(StandardOpenOption.READ);
 
+        //TODO: investigate 8kB byte array limitation
+        byte[] readBytes = new byte[8192];
+        FileChannel channel = newFileChannel(path, options);
+        ByteBuffer readBuffer = ByteBuffer.wrap(readBytes);
+
+        boolean writtenTo = false;
+        int read = channel.read(readBuffer);
+
+        while (read > 0) {
+            byte[] writeBytes = Arrays.copyOf(readBytes, read);
+            if (!writtenTo) {
+                Files.write(path2, writeBytes, StandardOpenOption.TRUNCATE_EXISTING);
+                writtenTo = true;
+            } else {
+                Files.write(path2, writeBytes, StandardOpenOption.APPEND);
+            }
+            read = channel.read(readBuffer);
+        }
+        channel.close();
     }
 
-    void copyFileContent(Path path, Path path2) {
-
-    }
-
-    boolean directoryIsEmpty(Path path) {
-        return false;  //To change body of created methods use File | Settings | File Templates.
+    boolean directoryIsEmpty(Path path) throws IOException {
+        try (DirectoryStream<Path> stream = newDirectoryStream(path, null)) {
+            if (stream.iterator().hasNext()) {
+                return false;
+            }
+            return true;
+        }
     }
 
     @Override
     public void move(Path path, Path path2, CopyOption... copyOptions) throws IOException {
+        guardAbsolutePath(path);
+        guardAbsolutePath(path2);
+        guardFileExists(path);
+        if (Files.exists(path2) && isSameFile(path, path2)) {
+            return;
+        }
+
         boolean overwrite = false;
         for (CopyOption co : copyOptions) {
             if (StandardCopyOption.ATOMIC_MOVE.equals(co)) {
@@ -219,15 +297,17 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
                 overwrite = true;
             }
         }
-        boolean exists = Files.exists(path2);
-        if (!overwrite && exists) {
+
+        FileSystem fileSystem = path.getFileSystem();
+
+        if (!overwrite && Files.exists(path2)) {
             throw new FileAlreadyExistsException("Target " + path2 + " exists and REPLACE_EXISTING not specified");
-        } else if (Files.isDirectory(path2) && !directoryIsEmpty(path2)) {
+        }
+        if (Files.isDirectory(path2) && !directoryIsEmpty(path2)) {
             throw new DirectoryNotEmptyException("Target not empty: " + path2);
         }
-        FileSystem fileSystem = path.getFileSystem();
         if (!fileSystem.equals(path2.getFileSystem())) {
-            throw new UnsupportedOperationException("Can not move file to a different GlusterFS volume");
+            throw new UnsupportedOperationException("Can not move file to a different file system");
         }
         GLFS.glfs_rename(((GlusterFileSystem) fileSystem).getVolptr(), ((GlusterPath) path).getString(), ((GlusterPath) path2).getString());
     }
@@ -235,6 +315,12 @@ public class GlusterFileSystemProvider extends FileSystemProvider {
     void guardFileExists(Path path) throws NoSuchFileException {
         if (!Files.exists(path)) {
             throw new NoSuchFileException(path.toString());
+        }
+    }
+
+    void guardAbsolutePath(Path p) {
+        if (!p.isAbsolute()) {
+            throw new UnsupportedOperationException("Relative paths not supported: " + p);
         }
     }
 
