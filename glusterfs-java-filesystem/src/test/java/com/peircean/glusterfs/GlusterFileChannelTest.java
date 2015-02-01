@@ -2,7 +2,6 @@ package com.peircean.glusterfs;
 
 import com.peircean.libgfapi_jni.internal.GLFS;
 import com.peircean.libgfapi_jni.internal.GlusterOpenOption;
-import com.peircean.libgfapi_jni.internal.UtilJNI;
 import com.peircean.libgfapi_jni.internal.structs.stat;
 import junit.framework.TestCase;
 import org.junit.Test;
