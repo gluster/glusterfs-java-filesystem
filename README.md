@@ -71,16 +71,13 @@ To run:
 - Finish attribute support   
     Owner/group names & ability to change   
     More ways to set permissions
-- Advanced synchronous file I/O   
-    Seeking & reading/writing a portion of a file
+- Finish integration testing for advanced synchronous file IO (reading/writing portion of file)
 - Asychronous file I/O
-- Better error reporting & handling
+- Better error reporting & handling (utilize UtilJNI.strerror() as part of IOException throws)
 - Finish readSymbolicLink unit tests
 - Publish test coverage report to Coveralls.io   
     [Blocked](https://github.com/trautonen/coveralls-maven-plugin/issues/36) due to use of Atlassian Clover
 - Create hard links
-- Delete files
-- Copy files
 
 ### Completed:
 
@@ -99,6 +96,9 @@ To run:
     Complete except for GlusterWatchKeyTest, in progress
 - Create & Read symlinks (read tests incomplete)
 - Publish test coverage & code quality reports to [SonarQube](http://sonar.peircean.com/dashboard/index/com.peircean.glusterfs:glusterfs-java-filesystem)
+- Delete files
+- Copy files
+- Advanced synchronous file IO
 
 # Contributing/Development
 
@@ -113,6 +113,6 @@ The licensing is likely to change in the near future as the project matures.
 
 # Acknowledgements
 
-- May G. & Ian H. for their hard work & dedication to improving this project. (Code contributions will be merged soon.)
+- May G. & Ian H. for their hard work & dedication to improving this project.
 - Atlassian for providing a free license for their most excellent Java code quality analyzer, [Clover](https://www.atlassian.com/software/clover/overview).
 - All the open source projects we depend on: [GlusterFS](http://gluster.org/), [HawtJNI](https://github.com/fusesource/hawtjni), [Lombok](http://projectlombok.org/), [JUnit](http://junit.org/), [Mockito](https://code.google.com/p/mockito/), [PowerMock](https://code.google.com/p/powermock/), [TestNG](http://testng.org/doc/index.html), [sonarqube](http://www.sonarqube.org/), [Hadoop](http://hadoop.apache.org/) (whose Glob to Regex converter we borrowed), [Maven](http://maven.apache.org/) and all the Maven plugins, and of course [Java](https://www.java.com/).
