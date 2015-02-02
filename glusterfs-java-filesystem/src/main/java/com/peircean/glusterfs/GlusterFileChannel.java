@@ -103,13 +103,63 @@ public class GlusterFileChannel extends FileChannel {
 		guardClosed();
 		byte[] bytes = byteBuffer.array();
 		long read = GLFS.glfs_read(fileptr, bytes, bytes.length, 0);
+		if (read < 0) {
+			throw new IOException(UtilJNI.strerror());
+		}
 		position += read;
+		byteBuffer.position((int)read);
 		return (int) read;
 	}
 
 	@Override
-	public long read(ByteBuffer[] byteBuffers, int i, int i2) throws IOException {
-		return 0;  //To change body of implemented methods use File | Settings | File Templates.
+	public long read(ByteBuffer[] byteBuffers, int offset, int length) throws IOException {
+		guardClosed();
+		if (length < 0 || length > byteBuffers.length - offset) {
+			throw new IndexOutOfBoundsException("Length provided is invalid.");
+		}
+		if (offset < 0 || offset > byteBuffers.length) {
+			throw new IndexOutOfBoundsException("Offset provided is invalid.");
+		}
+		if (!options.contains(StandardOpenOption.READ)) {
+			throw new NonReadableChannelException();
+		}
+
+		long totalRead = 0L;
+		try {
+			totalRead = readHelper(byteBuffers, offset, length);
+		} finally {
+			if (totalRead > 0) {
+				position += totalRead;
+			}
+		}
+		return totalRead;
+	}
+
+	long readHelper(ByteBuffer[] byteBuffers, int offset, int length) throws IOException {
+		long totalRead = 0L;
+		boolean endOfStream = false;
+		for (int i = offset; i < length + offset && !endOfStream; i++) {
+			byte[] bytes = byteBuffers[i].array();
+			int remaining;
+			while ((remaining = byteBuffers[i].remaining()) > 0) {
+				long read = GLFS.glfs_read(fileptr, bytes, remaining, 0);
+				if (read < 0) {
+					throw new IOException(UtilJNI.strerror());
+				}
+				totalRead += read;
+				byteBuffers[i].position((int) read);
+				if (0 == read) {
+					endOfStream = true;
+					break;
+				}
+			}
+		}
+
+		if (endOfStream && totalRead == 0) {
+			return -1;
+		}
+
+		return totalRead;
 	}
 
     @Override
@@ -216,8 +266,36 @@ public class GlusterFileChannel extends FileChannel {
 	}
 
 	@Override
-	public int read(ByteBuffer byteBuffer, long l) throws IOException {
-		return 0;  //To change body of implemented methods use File | Settings | File Templates.
+	public int read(ByteBuffer byteBuffer, long position) throws IOException {
+		guardClosed();
+		if (position < 0) {
+			throw new IllegalArgumentException();
+		}
+		if (!options.contains(StandardOpenOption.READ)) {
+			throw new NonReadableChannelException();
+		}
+		if (position >= size()) {
+			return -1;
+		}
+		int whence = 0; //SEEK_SET
+		int seek = GLFS.glfs_lseek(fileptr, position, whence);
+		if (seek < 0) {
+			throw new IOException();
+		}
+		byte[] bytes = byteBuffer.array();
+		long read = GLFS.glfs_read(fileptr, bytes, bytes.length, 0);
+
+		if (0 > read) {
+			throw new IOException();
+		}
+
+		seek = GLFS.glfs_lseek(fileptr, this.position, whence);
+
+		if (0 > seek) {
+			throw new IOException(UtilJNI.strerror());
+		}
+
+		return (int) read;
 	}
 
     @Override

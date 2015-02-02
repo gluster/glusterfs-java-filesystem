@@ -19,6 +19,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.OpenOption;
@@ -164,6 +165,7 @@ public class GlusterFileChannelTest extends TestCase {
 		when(GLFS.glfs_read(fileptr, bytes, bufferLength, 0)).thenReturn(bufferLength);
 
 		doReturn(bytes).when(mockBuffer).array();
+		doReturn(mockBuffer).when(mockBuffer).position((int) bufferLength);
 
 		int read = channel.read(mockBuffer);
 
@@ -171,10 +173,386 @@ public class GlusterFileChannelTest extends TestCase {
 
 		verify(channel).guardClosed();
 		verify(mockBuffer).array();
+		verify(mockBuffer).position((int) bufferLength);
 		assertEquals(bufferLength + offset, channel.getPosition());
 
 		verifyStatic();
 		GLFS.glfs_read(fileptr, bytes, bufferLength, 0);
+	}
+
+	@Test(expected = IOException.class)
+	public void testRead1Arg_whenReadFails() throws IOException {
+		doNothing().when(channel).guardClosed();
+		long fileptr = 1234l;
+		channel.setFileptr(fileptr);
+
+		byte[] bytes = new byte[]{'a', 'b', 'c'};
+		long bufferLength = bytes.length;
+		long offset = 4;
+		channel.setPosition(offset);
+
+		mockStatic(GLFS.class);
+		when(GLFS.glfs_read(fileptr, bytes, bufferLength, 0)).thenReturn(-1L);
+
+		doReturn(bytes).when(mockBuffer).array();
+
+		channel.read(mockBuffer);
+	}
+
+	@Test
+	public void testRead3Arg() throws IOException {
+		doNothing().when(channel).guardClosed();
+		Set<StandardOpenOption> options = new HashSet<>();
+		options.add(StandardOpenOption.READ);
+		channel.setOptions(options);
+		ByteBuffer[] buffers = new ByteBuffer[2];
+		buffers[0] = mockBuffer;
+		buffers[1] = mockBuffer;
+		channel.setPosition(0);
+		int offset = 0;
+		int length = 2;
+		doReturn(10L).when(channel).readHelper(buffers, offset, length);
+		long read = channel.read(buffers, offset, length);
+
+		verify(channel).readHelper(buffers, offset, length);
+		verify(channel).guardClosed();
+		assertEquals(channel.position(), read);
+	}
+
+	@Test(expected = ClosedChannelException.class)
+	public void testRead3Arg_whenClosed() throws IOException {
+		channel.setClosed(true);
+		ByteBuffer[] buffers = new ByteBuffer[2];
+		buffers[0] = mockBuffer;
+		buffers[1] = mockBuffer;
+		int offset = 0;
+		int length = 2;
+		channel.read(buffers, offset, length);
+	}
+
+	@Test(expected = IndexOutOfBoundsException.class)
+	public void testRead3Arg_whenLengthTooSmall() throws IOException {
+		read3ArgLengthOffsetTestHelper(true, false);
+	}
+
+	@Test(expected = IndexOutOfBoundsException.class)
+	public void testRead3Arg_whenLengthTooBig() throws IOException {
+		read3ArgLengthOffsetTestHelper(true, true);
+	}
+
+	@Test(expected = IndexOutOfBoundsException.class)
+	public void testRead3Arg_whenOffsetTooSmall() throws IOException {
+		read3ArgLengthOffsetTestHelper(false, false);
+	}
+
+	@Test(expected = IndexOutOfBoundsException.class)
+	public void testRead3Arg_whenOffsetTooBig() throws IOException {
+		read3ArgLengthOffsetTestHelper(false, true);
+	}
+
+	private void read3ArgLengthOffsetTestHelper(boolean testingLength, boolean testingTooBig) throws IOException {
+		doNothing().when(channel).guardClosed();
+		ByteBuffer[] buffers = new ByteBuffer[2];
+		buffers[0] = mockBuffer;
+		buffers[1] = mockBuffer;
+		int offset = 0;
+		int length = 2;
+
+		if (testingLength) {
+			if (testingTooBig) {
+				length = 3;
+			} else {
+				length = -1;
+			}
+		} else {
+			if (testingTooBig) {
+				offset = 3;
+			} else {
+				offset = 1;
+			}
+		}
+
+		channel.read(buffers, offset, length);
+	}
+
+	@Test(expected = NonReadableChannelException.class)
+	public void testRead3Arg_whenNonReadableChannel() throws IOException {
+		doNothing().when(channel).guardClosed();
+		ByteBuffer[] buffers = new ByteBuffer[2];
+		buffers[0] = mockBuffer;
+		buffers[1] = mockBuffer;
+		int offset = 0;
+		int length = 2;
+		channel.read(buffers, offset, length);
+	}
+
+	@Test
+	public void testReadHelper() throws IOException {
+		long fileptr = 1234L;
+		channel.setFileptr(fileptr);
+
+		ByteBuffer[] buffers = new ByteBuffer[2];
+		buffers[0] = mockBuffer;
+		buffers[1] = mockBuffer;
+		int offset = 0;
+		int length = 2;
+
+		byte[] bytes = new byte[]{'h', 'e', 'l', 'l', 'o'};
+		doReturn(bytes).when(mockBuffer).array();
+
+		when(mockBuffer.remaining()).thenReturn(5, 0, 5, 0);
+
+		mockStatic(GLFS.class);
+		when(GLFS.glfs_read(fileptr, bytes, 5, 0)).thenReturn(5L);
+		doReturn(mockBuffer).when(mockBuffer).position(5);
+
+		channel.readHelper(buffers, offset, length);
+
+		verify(mockBuffer, times(2)).position(5);
+		verifyStatic(times(2));
+		GLFS.glfs_read(fileptr, bytes, 5, 0);
+		verify(mockBuffer, times(4)).remaining();
+		verify(mockBuffer, times(2)).array();
+	}
+
+	@Test(expected = IOException.class)
+	public void testReadHelper_whenReadFails() throws IOException {
+		long fileptr = 1234L;
+		channel.setFileptr(fileptr);
+
+		ByteBuffer[] buffers = new ByteBuffer[2];
+		buffers[0] = mockBuffer;
+		buffers[1] = mockBuffer;
+		int offset = 0;
+		int length = 2;
+
+		byte[] bytes = new byte[]{'h', 'e', 'l', 'l', 'o'};
+		doReturn(bytes).when(mockBuffer).array();
+
+		when(mockBuffer.remaining()).thenReturn(5, 0, 5, 0);
+
+		mockStatic(GLFS.class);
+		when(GLFS.glfs_read(fileptr, bytes, 5, 0)).thenReturn(-1L);
+
+		channel.readHelper(buffers, offset, length);
+	}
+
+	@Test
+	public void testReadHelper_whenEndOfStreamAndTotalReadZero() throws IOException {
+		long fileptr = 1234L;
+		channel.setFileptr(fileptr);
+
+		ByteBuffer[] buffers = new ByteBuffer[2];
+		buffers[0] = mockBuffer;
+		buffers[1] = mockBuffer;
+		int offset = 0;
+		int length = 2;
+
+		byte[] bytes = new byte[]{'h', 'e', 'l', 'l', 'o'};
+		doReturn(bytes).when(mockBuffer).array();
+
+		when(mockBuffer.remaining()).thenReturn(5, 0, 5, 0);
+
+		mockStatic(GLFS.class);
+		when(GLFS.glfs_read(fileptr, bytes, 5, 0)).thenReturn(0L);
+		doReturn(mockBuffer).when(mockBuffer).position(0);
+
+		long ret = channel.readHelper(buffers, offset, length);
+
+		assertEquals(ret, -1);
+		verify(mockBuffer).position(0);
+		verifyStatic();
+		GLFS.glfs_read(fileptr, bytes, 5, 0);
+		verify(mockBuffer).remaining();
+		verify(mockBuffer).array();
+	}
+
+	@Test
+	public void testRead2Arg() throws IOException {
+		long position = 5L;
+		long fileptr = 1234L;
+		long defaultPosition = 0L;
+		channel.setFileptr(fileptr);
+		channel.setPosition(defaultPosition);
+
+		doNothing().when(channel).guardClosed();
+
+		Set<StandardOpenOption> options = new HashSet<>();
+		options.add(StandardOpenOption.READ);
+		channel.setOptions(options);
+
+		doReturn(10L).when(channel).size();
+
+		mockStatic(GLFS.class);
+		when(GLFS.glfs_lseek(fileptr, position, 0)).thenReturn(0);
+
+		byte[] bytes = new byte[]{'h', 'e', 'l', 'l', 'o'};
+		doReturn(bytes).when(mockBuffer).array();
+
+		long expectedRet = 7L;
+		when(GLFS.glfs_read(fileptr, bytes, bytes.length, 0)).thenReturn(expectedRet);
+
+		when(GLFS.glfs_lseek(fileptr, defaultPosition, 0)).thenReturn(0);
+
+		long ret = channel.read(mockBuffer, position);
+
+		assertEquals(ret, expectedRet);
+		verifyStatic();
+		GLFS.glfs_lseek(fileptr, defaultPosition, 0);
+		verifyStatic();
+		GLFS.glfs_read(fileptr, bytes, bytes.length, 0);
+		verify(mockBuffer).array();
+		verifyStatic();
+		GLFS.glfs_lseek(fileptr, position, 0);
+		verify(channel).size();
+		verify(channel).guardClosed();
+	}
+
+	@Test(expected = ClosedChannelException.class)
+	public void testRead2Arg_whenClosed() throws IOException {
+		long position = 5L;
+		channel.setClosed(true);
+		channel.read(mockBuffer, position);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testRead2Arg_whenPositionNegative() throws IOException {
+		long position = -1L;
+
+		doNothing().when(channel).guardClosed();
+
+		channel.read(mockBuffer, position);
+	}
+
+	@Test(expected = NonReadableChannelException.class)
+	public void testRead2Arg_whenNonReadableChannel() throws IOException {
+		long position = 5L;
+
+		doNothing().when(channel).guardClosed();
+
+		channel.read(mockBuffer, position);
+	}
+
+	@Test
+	public void testRead2Arg_whenPositionTooBig() throws IOException {
+		long position = 5L;
+
+		doNothing().when(channel).guardClosed();
+
+		Set<StandardOpenOption> options = new HashSet<>();
+		options.add(StandardOpenOption.READ);
+		channel.setOptions(options);
+
+		doReturn(4L).when(channel).size();
+
+		long expectedRet = -1L;
+
+		long ret = channel.read(mockBuffer, position);
+
+		assertEquals(ret, expectedRet);
+		verify(channel).size();
+		verify(channel).guardClosed();
+	}
+
+	@Test(expected = IOException.class)
+	public void testRead2Arg_whenFirstSeekFails() throws IOException {
+		long position = 5L;
+		long fileptr = 1234L;
+		channel.setFileptr(fileptr);
+
+		doNothing().when(channel).guardClosed();
+
+		Set<StandardOpenOption> options = new HashSet<>();
+		options.add(StandardOpenOption.READ);
+		channel.setOptions(options);
+
+		doReturn(10L).when(channel).size();
+
+		mockStatic(GLFS.class);
+		when(GLFS.glfs_lseek(fileptr, position, 0)).thenReturn(-1);
+
+		channel.read(mockBuffer, position);
+
+		verifyStatic();
+		GLFS.glfs_lseek(fileptr, position, 0);
+		verify(channel).size();
+		verify(channel).guardClosed();
+	}
+
+	@Test(expected = IOException.class)
+	public void testRead2Arg_whenReadFails() throws IOException {
+		long position = 5L;
+		long fileptr = 1234L;
+		long defaultPosition = 0L;
+		channel.setFileptr(fileptr);
+		channel.setPosition(defaultPosition);
+
+		doNothing().when(channel).guardClosed();
+
+		Set<StandardOpenOption> options = new HashSet<>();
+		options.add(StandardOpenOption.READ);
+		channel.setOptions(options);
+
+		doReturn(10L).when(channel).size();
+
+		mockStatic(GLFS.class);
+		when(GLFS.glfs_lseek(fileptr, position, 0)).thenReturn(0);
+
+		byte[] bytes = new byte[]{'h', 'e', 'l', 'l', 'o'};
+		doReturn(bytes).when(mockBuffer).array();
+
+		long expectedRet = -1;
+		when(GLFS.glfs_read(fileptr, bytes, bytes.length, 0)).thenReturn(expectedRet);
+
+		channel.read(mockBuffer, position);
+
+		verifyStatic();
+		GLFS.glfs_read(fileptr, bytes, bytes.length, 0);
+		verify(mockBuffer).array();
+		verifyStatic();
+		GLFS.glfs_lseek(fileptr, position, 0);
+		verify(channel).size();
+		verify(channel).guardClosed();
+	}
+
+	@Test(expected = IOException.class)
+	public void testRead2Arg_whenSecondSeekFails() throws IOException {
+		long position = 5L;
+		long fileptr = 1234L;
+		long defaultPosition = 0L;
+		channel.setFileptr(fileptr);
+		channel.setPosition(defaultPosition);
+
+		doNothing().when(channel).guardClosed();
+
+		Set<StandardOpenOption> options = new HashSet<>();
+		options.add(StandardOpenOption.READ);
+		channel.setOptions(options);
+
+		doReturn(10L).when(channel).size();
+
+		mockStatic(GLFS.class);
+		when(GLFS.glfs_lseek(fileptr, position, 0)).thenReturn(0);
+
+		byte[] bytes = new byte[]{'h', 'e', 'l', 'l', 'o'};
+		doReturn(bytes).when(mockBuffer).array();
+
+		long expectedRet = 7L;
+		when(GLFS.glfs_read(fileptr, bytes, bytes.length, 0)).thenReturn(expectedRet);
+
+		when(GLFS.glfs_lseek(fileptr, defaultPosition, 0)).thenReturn(-1);
+
+		channel.read(mockBuffer, position);
+
+		verifyStatic();
+		GLFS.glfs_lseek(fileptr, defaultPosition, 0);
+		verifyStatic();
+		GLFS.glfs_read(fileptr, bytes, bytes.length, 0);
+		verify(mockBuffer).array();
+		verifyStatic();
+		GLFS.glfs_lseek(fileptr, position, 0);
+		verify(channel).size();
+		verify(channel).guardClosed();
 	}
 
     @Test
