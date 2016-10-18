@@ -166,7 +166,7 @@ public class GlusterFileChannel extends FileChannel {
     public int write(ByteBuffer byteBuffer) throws IOException {
         guardClosed();
         byte[] buf = byteBuffer.array();
-        int written = GLFS.glfs_write(fileptr, buf, buf.length, 0);
+        int written = GLFS.glfs_write(fileptr, buf, byteBuffer.limit(), 0);
         if (written < 0) {
             throw new IOException(UtilJNI.strerror());
         }
@@ -189,17 +189,16 @@ public class GlusterFileChannel extends FileChannel {
         }
 
         long totalWritten = 0L;
-
         for (int i = offset; i < length + offset; i++) {
             int remaining = byteBuffers[i].remaining();
             while (remaining > 0) {
                 byte[] bytes = byteBuffers[i].array();
-                int written = GLFS.glfs_write(fileptr, bytes, remaining, 0);
+                int written = GLFS.glfs_write(fileptr, bytes, remaining, byteBuffers[i].position());
                 if (written < 0) {
                     throw new IOException();
                 }
                 position += written;
-                byteBuffers[i].position(written);
+                byteBuffers[i].position(remaining + written);
                 totalWritten += written;
                 remaining = byteBuffers[i].remaining();
             }
