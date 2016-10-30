@@ -16,9 +16,9 @@ before_install: |
   sudo gluster volume start foo
   sleep 2
 
-  gluster volume create foo 127.0.0.2:/var/tmp/foo force
-  gluster volume set foo server.allow-insecure on
-  gluster volume start foo
+  sudo mkdir -v /tmp/foo
+  sudo mount -t glusterfs localhost:foo /tmp/foo
+  sudo chmod -v ugo+w /tmp/foo
 after_script:  bash catlogs.sh
 notifications:
   email: false
