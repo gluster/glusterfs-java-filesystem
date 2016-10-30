@@ -1,10 +1,24 @@
 language: java
 sudo: required
 dist: trusty
-before_install:
-  - sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y
-  - sudo apt-get update -qq -y
-  - sudo apt-get install -y build-essential libtool pkg-config automake glusterfs-server
+before_install: |
+  sudo add-apt-repository -y ppa:gluster/glusterfs-3.8
+  sudo apt-get update -qq -y
+  sudo apt-get -y install build-essential libtool pkg-config automake glusterfs-server
+  sleep 2
+
+  sudo sed -i 's/\(end-volume\)/    option rpc-auth-allow-insecure on\n\1/' /etc/glusterfs/glusterd.vol
+  sudo service glusterfs-server restart
+  sleep 2
+
+  sudo gluster volume create foo 127.0.0.1:/var/tmp/foo force
+  sudo gluster volume set foo server.allow-insecure on
+  sudo gluster volume start foo
+  sleep 2
+
+  gluster volume create foo 127.0.0.1:/var/tmp/foo force
+  gluster volume set foo server.allow-insecure on
+  gluster volume start foo
 after_script:  bash catlogs.sh
 notifications:
   email: false
