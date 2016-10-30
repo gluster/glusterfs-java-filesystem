@@ -55,6 +55,37 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.fusesource.hawtjni</groupId>
+                <artifactId>maven-hawtjni-plugin</artifactId>
+                <version>${hawtjni-version}</version>
+                <executions>
+                    <execution>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <name>libgfapi-jni</name>
+                    <classified>false</classified>
+                    <nativeSrcDependency>
+                        <groupId>com.peircean.glusterfs</groupId>
+                        <artifactId>libgfapi-jni</artifactId>
+                        <version>${project.version}</version>
+                        <classifier>native-src</classifier>
+                        <type>zip</type>
+                    </nativeSrcDependency>
+                    <configureArgs>
+                        <arg>--with-glfs=${env.GLFS_HOME}</arg>
+                    </configureArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     <profiles>
         <profile>
             <id>sonar</id>
