@@ -56,6 +56,13 @@
             <artifactId>libgfapi-jni</artifactId>
             <version>1.0.5-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.8.5</version>
+            <scope>test</scope>
+            <!--<classifier>jdk15</classifier>-->
+        </dependency>
     </dependencies>
 
     <build>
