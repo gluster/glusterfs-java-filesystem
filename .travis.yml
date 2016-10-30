@@ -1,8 +1,6 @@
 language: java
 sudo: required
 dist: trusty
-jdk:
-  - openjdk7
 before_install:
   - sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y
   - sudo apt-get update -qq -y
