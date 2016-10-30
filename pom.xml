@@ -92,7 +92,7 @@
         <hawtjni-version>1.14</hawtjni-version>
         <!-- The tests connect to the vagrant box provided by glusterfs-java-filesystem -->
         <!-- so that needs to be running in order for the tests to run. -->
-        <glusterfs.server>127.0.0.1</glusterfs.server>
+        <glusterfs.server>localhost</glusterfs.server>
         <glusterfs.volume>foo</glusterfs.volume>
         <client.logfile>/tmp/glfsjni.log</client.logfile>
     </properties>
