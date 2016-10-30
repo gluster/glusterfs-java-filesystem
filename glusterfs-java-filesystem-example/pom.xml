@@ -7,7 +7,6 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.peircean.glusterfs</groupId>
     <artifactId>glusterfs-java-filesystem-example</artifactId>
     <version>1.0.5-SNAPSHOT</version>
 

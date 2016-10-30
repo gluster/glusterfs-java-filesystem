@@ -1,6 +1,6 @@
 package com.peircean.glusterfs;
 
-import com.peircean.libgfapi_jni.internal.GLFS;
+import com.peircean.glusterfs.internal.GLFS;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

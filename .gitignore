@@ -16,3 +16,11 @@ hs_err_pid*.log
 .clover
 dependency-reduced-pom.xml
 release.properties
+glfsjni.log
+.vagrant
+.clover
+dependency-reduced-pom.xml
+release.properties
+pom.xml.next
+pom.xml.releaseBackup
+pom.xml.tag

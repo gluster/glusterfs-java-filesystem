@@ -35,8 +35,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.peircean.libgfapi-jni</groupId>
-            <artifactId>libgfapi-all</artifactId>
+            <groupId>com.peircean.glusterfs</groupId>
+            <artifactId>libgfapi-linux64</artifactId>
             <version>1.0.5-SNAPSHOT</version>
         </dependency>
 

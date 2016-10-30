@@ -1,7 +1,7 @@
 package com.peircean.glusterfs;
 
-import com.peircean.libgfapi_jni.internal.GLFS;
-import com.peircean.libgfapi_jni.internal.structs.dirent;
+import com.peircean.glusterfs.internal.GLFS;
+import com.peircean.glusterfs.internal.structs.dirent;
 import lombok.Data;
 
 import java.io.IOException;

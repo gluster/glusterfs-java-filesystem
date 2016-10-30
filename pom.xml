@@ -1,14 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2013 Louis Zuckerman All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are
+    met:
+
+       * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+       * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following disclaimer
+    in the documentation and/or other materials provided with the
+    distribution.
+       * Neither the names of the authors nor the names of
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+    =======
+
+    The libgfapi-jni modules, mostly in the form of large sections of maven pom.xml
+    files, were derived from the leveldbjni project with significant help from
+    Hiram Chirino (thanks, Hiram!).  The leveldbjni project is hosted on github:
+    https://github.com/fusesource/leveldbjni
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.peircean.glusterfs</groupId>
     <artifactId>glusterfs-java-filesystem-project</artifactId>
     <version>1.0.5-SNAPSHOT</version>
-    <modules>
-        <module>glusterfs-java-filesystem</module>
-        <module>glusterfs-java-filesystem-example</module>
-    </modules>
     <packaging>pom</packaging>
 
     <parent>
@@ -21,6 +53,7 @@
     <description>glusterfs-java-filesystem aims to be a complete implementation of a Java7/NIO.2 File System Provider
         backed by GlusterFS via libgfapi-jni
     </description>
+    <inceptionYear>2013</inceptionYear>
     <licenses>
         <license>
             <name>BSD-style</name>
@@ -29,8 +62,6 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <inceptionYear>2013</inceptionYear>
 
     <scm>
         <url>https://github.com/semiosis/glusterfs-java-filesystem</url>
@@ -47,10 +78,39 @@
             <url>http://about.me/louiszuckerman</url>
             <timezone>GMT-5</timezone>
         </developer>
+        <developer>
+            <id>chirino</id>
+            <name>Hiram Chirino</name>
+            <email>hiram@hiramchirino.com</email>
+            <url>http://hiramchirino.com</url>
+            <timezone>GMT-5</timezone>
+        </developer>
     </developers>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <hawtjni-version>1.14</hawtjni-version>
+        <!-- The tests connect to the vagrant box provided by glusterfs-java-filesystem -->
+        <!-- so that needs to be running in order for the tests to run. -->
+        <glusterfs.server>127.0.0.1</glusterfs.server>
+        <glusterfs.volume>foo</glusterfs.volume>
+        <client.logfile>/tmp/glfsjni.log</client.logfile>
+    </properties>
+
+    <modules>
+        <module>libgfapi-jni</module>
+        <module>libgfapi-linux64</module>
+        <module>glusterfs-java-filesystem</module>
+        <module>glusterfs-java-filesystem-example</module>
+    </modules>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.3</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -85,7 +145,74 @@
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.8.5</version>
+            <scope>test</scope>
+            <!--<classifier>jdk15</classifier>-->
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.10</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>jxr-maven-plugin</artifactId>
+                <version>2.0-beta-1</version>
+                <configuration>
+                    <aggregate>true</aggregate>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <excludePackageNames>*.internal</excludePackageNames>
+                    <linksource>true</linksource>
+                    <links>
+                        <link>http://java.sun.com/j2se/1.5.0/docs/api</link>
+                    </links>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.1.1</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>index</report>
+                            <report>sumary</report>
+                            <report>plugins</report>
+                            <report>dependencies</report>
+                            <report>mailing-list</report>
+                            <report>issue-tracking</report>
+                            <report>license</report>
+                            <report>scm</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>surefire-report-maven-plugin</artifactId>
+                <version>2.0-beta-1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
     <profiles>
         <profile>

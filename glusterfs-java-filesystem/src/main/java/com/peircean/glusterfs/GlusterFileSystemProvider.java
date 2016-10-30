@@ -1,8 +1,8 @@
 package com.peircean.glusterfs;
 
-import com.peircean.libgfapi_jni.internal.GLFS;
-import com.peircean.libgfapi_jni.internal.structs.stat;
-import com.peircean.libgfapi_jni.internal.structs.statvfs;
+import com.peircean.glusterfs.internal.GLFS;
+import com.peircean.glusterfs.internal.structs.stat;
+import com.peircean.glusterfs.internal.structs.statvfs;
 import lombok.AccessLevel;
 import lombok.Getter;
 
@@ -16,7 +16,7 @@ import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 
-import static com.peircean.libgfapi_jni.internal.GLFS.*;
+import static com.peircean.glusterfs.internal.GLFS.*;
 
 /**
  * @author <a href="http://about.me/louiszuckerman">Louis Zuckerman</a>

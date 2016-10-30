@@ -1,7 +1,7 @@
 package com.peircean.glusterfs;
 
 import lombok.Data;
-import com.peircean.libgfapi_jni.internal.structs.stat;
+import com.peircean.glusterfs.internal.structs.stat;
 
 import java.nio.file.attribute.*;
 import java.util.HashMap;

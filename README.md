@@ -15,9 +15,9 @@ I prefer to be contacted on IRC, Twitter, or a Github issue.  You can find me, s
 
 Thanks!
 
-# Use
+## Use
 
-## Adding to your maven project
+### Adding to your maven project
 
     <dependencies>
         <dependency>
@@ -27,7 +27,7 @@ Thanks!
         </dependency>
     </dependencies>
 
-## Adding to your non-maven project
+### Adding to your non-maven project
 
 The maven shade plugin can build a unified (shaded) JAR suitable for dropping in to the classpath of any JVM application.
 
@@ -40,13 +40,13 @@ Maven will report the path of this shaded JAR.  You can run `export CLASSPATH=<p
 
 Contact me (on IRC, Twitter, or in a Github issue) if you need help obtaining a JAR, if you can't, or don't want to, build it with maven yourself.
 
-## Access GlusterFS volumes with the NIO.2 API
+### Access GlusterFS volumes with the NIO.2 API
 
 Once this library is in your classpath all you need to do in your code is access a GlusterFS URI, for example
 
     gluster://server:volume/path
 
-## Example usage
+### Example usage
 
 A Vagrantfile in the root of this repository sets up a VM with a volume called *foo* at IP address *172.31.31.31* on a 
 private network.
@@ -61,7 +61,7 @@ To run:
     vagrant up
     mvn exec:exec
 
-# Roadmap
+## Roadmap
 
 ### TODO:
 
@@ -99,6 +99,47 @@ To run:
 - Delete files
 - Copy files
 - Advanced synchronous file IO
+
+# libgfapi-jni
+
+Java Native Interface (JNI) bindings for libgfapi, the GlusterFS client API.
+
+## Usage
+
+This project provides a low level binding from Java to the C language GlusterFS API library.
+
+It was developed as part of [glusterfs-java-filesystem](https://github.com/semiosis/glusterfs-java-filesystem).  Use that 
+project to enable GlusterFS support in your Java applications.
+
+## Development Instructions
+
+### Prerequisites
+
+* glusterfs 3.4 or newer - installed from source or a gluster development package installed.
+* maven 3.0.3 or newer
+* auto tool chain
+* Ubuntu packages: build-essential libtool pkg-config automake
+* Ubuntu glusterfs PPAs: https://launchpad.net/~gluster  (the glusterfs-common package is required to build this project)
+
+### Compiling without tests
+
+If you have installed gluster to non-standard location then you export `GLFS_HOME` so we know where it's at:
+
+    export GLFS_HOME=/path/to/gluster/prefix
+
+Building without tests is simple.  Just run:
+
+    mvn -Dmaven.test.skip=true install
+
+### Compiling and Testing
+
+The test suite is configured by default to run against the glusterfs server configured in the vagrant box provided by 
+glusterfs-java-filesystem.  Run `vagrant up` in that project's root directory to launch the server, then run the tests 
+in this project.
+
+Once that server is up, you can run the tests with:
+
+    mvn test
 
 # Contributing/Development
 

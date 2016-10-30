@@ -1,7 +1,7 @@
 package com.peircean.glusterfs;
 
-import com.peircean.libgfapi_jni.internal.GLFS;
-import com.peircean.libgfapi_jni.internal.structs.dirent;
+import com.peircean.glusterfs.internal.GLFS;
+import com.peircean.glusterfs.internal.structs.dirent;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({GLFS.class, GlusterDirectoryIterator.class, dirent.class})
-@SuppressStaticInitializationFor("com.peircean.libgfapi_jni.internal.structs.dirent")
+@SuppressStaticInitializationFor("com.peircean.glusterfs.internal.structs.dirent")
 public class GlusterDirectoryIteratorTest {
 
     @Mock
