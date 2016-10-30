@@ -11,12 +11,12 @@ before_install: |
   sudo service glusterfs-server restart
   sleep 2
 
-  sudo gluster volume create foo 127.0.0.1:/var/tmp/foo force
+  sudo gluster volume create foo 127.0.0.2:/var/tmp/foo force
   sudo gluster volume set foo server.allow-insecure on
   sudo gluster volume start foo
   sleep 2
 
-  gluster volume create foo 127.0.0.1:/var/tmp/foo force
+  gluster volume create foo 127.0.0.2:/var/tmp/foo force
   gluster volume set foo server.allow-insecure on
   gluster volume start foo
 after_script:  bash catlogs.sh
