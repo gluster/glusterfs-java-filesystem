@@ -16,15 +16,14 @@
     <dependencies>
         <dependency>
             <groupId>com.peircean.glusterfs</groupId>
-            <artifactId>libgfapi-linux64</artifactId>
+            <artifactId>libgfapi-jni</artifactId>
             <version>1.0.5-SNAPSHOT</version>
         </dependency>
 
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.16.10</version>
-            <scope>provided</scope>
+            <groupId>com.peircean.glusterfs</groupId>
+            <artifactId>libgfapi-linux64</artifactId>
+            <version>1.0.5-SNAPSHOT</version>
         </dependency>
 
         <dependency>
