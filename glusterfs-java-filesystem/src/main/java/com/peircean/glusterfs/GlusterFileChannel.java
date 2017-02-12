@@ -198,7 +198,7 @@ public class GlusterFileChannel extends FileChannel {
                     throw new IOException();
                 }
                 position += written;
-                byteBuffers[i].position(remaining + written);
+                byteBuffers[i].position(byteBuffers[i].position() + written);
                 totalWritten += written;
                 remaining = byteBuffers[i].remaining();
             }
