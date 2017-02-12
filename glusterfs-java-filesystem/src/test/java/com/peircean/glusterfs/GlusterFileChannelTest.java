@@ -568,6 +568,7 @@ public class GlusterFileChannelTest extends TestCase {
         when(GLFS.glfs_write(fileptr, bytes, bufferLength, 0)).thenReturn(bufferLength);
 
         doReturn(bytes).when(mockBuffer).array();
+        doReturn(bufferLength).when(mockBuffer).limit();
         doReturn(null).when(mockBuffer).position(bufferLength);
 
         int written = channel.write(mockBuffer);
